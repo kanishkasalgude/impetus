@@ -1,7 +1,9 @@
 import { auth } from "../../firebase";
 
-// Use environment variable or default to localhost
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Dynamically derive the backend URL from the browser's current hostname.
+// This makes it work for both localhost dev and LAN/mobile access without any config changes.
+const BASE_URL = import.meta.env.VITE_API_URL ||
+    `http://${window.location.hostname}:5000/api`;
 
 const getHeaders = async (): Promise<HeadersInit | any> => {
     // Wait for Auth to be ready
