@@ -607,163 +607,126 @@ const Chatbot: React.FC = () => {
     return (
         <div className="h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] max-w-7xl mx-auto md:p-6 p-0">
             <ChatLayout sidebar={Sidebar}>
-                {/* Header for Back Navigation (if from Advisory OR CropCare OR FarmHealth OR Planner) - Visible on both Mobile & Desktop */}
-                {(location.state?.fromAdvisory || location.state?.fromCropCare || location.state?.fromFarmHealth || location.state?.isRoadmapPlanner || location.state?.fromPlanner) && (
-                    <div className="flex items-center justify-between p-4 border-b border-[#E0E6E6] bg-white/80 backdrop-blur-md sticky top-0 z-30">
-                        <button
-                            onClick={() => {
-                                // Navigate back to source with restored state
-                                if (location.state?.isRoadmapPlanner) {
-                                    navigate(`/roadmap/${location.state.businessName}`, { state: location.state.previousState });
-                                } else if (location.state?.fromFarmHealth) {
-                                    navigate('/health', { state: location.state.previousState });
-                                } else if (location.state?.fromPlanner) {
-                                    navigate('/', { state: location.state.previousState });
-                                } else {
-                                    const targetPath = location.state?.fromAdvisory ? '/advisory' : '/crop-care';
-                                    navigate(targetPath, { state: location.state.previousState });
-                                }
-                            }}
-                            className="flex items-center gap-2 text-[#6B7878] font-bold hover:text-[#1B5E20] transition-colors"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                            {t.back} to {location.state?.isRoadmapPlanner ? 'Strategy Planner' : (location.state?.fromFarmHealth ? 'Farm Health' : (location.state?.fromPlanner ? 'Planner' : (location.state?.fromAdvisory ? 'Recommendations' : 'Assessment')))}
-                        </button>
-
-
-                    </div>
-                )}
-
-                {/* Mobile Header (Only show if NOT from advisory, OR keep it but maybe different style? 
-                    Actually, if from advisory, we probably want the back button to take precedence.
-                    Let's hide the default mobile header if we show the back button locally, OR just stack them.
-                    Stacking might be crowded. Let's show Mobile Header only if NOT from advisory, 
-                    OR modify it. 
-                    Simple approach: If fromAdvisory, showing the back button bar above is fine. 
-                */}
-                {!location.state?.fromAdvisory && !location.state?.fromCropCare && !location.state?.fromFarmHealth && !location.state?.fromPlanner && (
-                    <div className={`flex items-center p-4 border-b border-[#E0E6E6] bg-white/80 backdrop-blur-md sticky top-0 z-10 w-full overflow-x-auto no-scrollbar ${messages.length === 0 ? 'md:hidden' : ''}`}>
-                        <div className="md:hidden flex items-center flex-shrink-0">
-                            <button onClick={() => setIsSidebarOpen(true)} className="p-2 mr-2">
-                                <Menu className="w-6 h-6 text-[#002105]" />
-                            </button>
-                        </div>
-                        
-                        {messages.length > 0 ? (
-                            <div className="flex items-center gap-2 flex-nowrap min-w-max">
-                                <button onClick={() => navigate('/')} className="px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap bg-[#1B5E20] text-white">Chatbot</button>
-                                <button onClick={() => navigate('/plan')} className="px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap bg-[#F1F8E9] text-[#1B5E20] hover:bg-[#E8F5E9] transition-colors border border-[#E0E6E6]">Plan</button>
-                                <button onClick={() => navigate('/advisory')} className="px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap bg-[#F1F8E9] text-[#1B5E20] hover:bg-[#E8F5E9] transition-colors border border-[#E0E6E6]">Business Advisory</button>
-                            </div>
-                        ) : (
-                            <h1 className="text-lg font-bold text-[#002105] md:hidden">
-                                {location.state?.isRoadmapPlanner ? `${t.chatbot?.makingPlan || 'Making 10-year plan for'} ${location.state?.businessName}...` : ''}
-                            </h1>
-                        )}
-                    </div>
-                )}
-
-                {/* Messages Area */}
+                {/* Messages Container */}
                 <div
                     ref={chatContainerRef}
                     onScroll={handleScroll}
-                    className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6"
+                    className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4"
                 >
-                    {messages.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center">
-                            <h2 className="text-2xl font-black text-[#002105] mb-8 uppercase tracking-widest opacity-80">{(t.chatbot as any)?.selectFeature || 'Select Feature'}</h2>
-                            <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-2xl px-4">
-                                {featureButtons.map((feature) => (
+                    {/* Welcome / Empty State */}
+                    {messages.length === 0 && !isLoading && (
+                        <div className="flex flex-col items-center justify-center h-full text-center py-12 gap-6">
+                            <div className="w-16 h-16 bg-[#1B5E20]/10 rounded-full flex items-center justify-center">
+                                <Bot className="w-8 h-8 text-[#1B5E20]" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-bold text-[#1B5E20]">Welcome to KrishiSahAI</h2>
+                                <p className="text-stone-500 mt-1 text-sm">Ask me anything about farming, crops, or your land.</p>
+                            </div>
+                            {/* Feature Buttons */}
+                            <div className="grid grid-cols-2 gap-3 w-full max-w-md mt-2">
+                                {featureButtons.map((f) => (
                                     <button
-                                        key={feature.id}
-                                        onClick={() => handleFeatureSelect(feature)}
-                                        className="group flex flex-col items-center gap-3 p-6 md:p-8 rounded-3xl bg-white border-2 border-transparent hover:border-[#1B5E20] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all"
+                                        key={f.id}
+                                        onClick={() => handleFeatureSelect(f)}
+                                        className="flex flex-col items-center gap-2 p-4 bg-white border-2 border-[#E0E6E6] hover:border-[#1B5E20] rounded-xl text-center transition-all shadow-sm hover:shadow-md"
                                     >
-                                        <div className="w-16 h-16 md:w-20 md:h-20 bg-[#F1F8E9] group-hover:bg-[#E8F5E9] rounded-full flex items-center justify-center transition-colors border border-green-50 shadow-inner">
-                                            {feature.icon}
-                                        </div>
-                                        <span className="font-bold text-[#002105] text-center text-sm md:text-base">{feature.name}</span>
+                                        {f.icon}
+                                        <span className="text-xs font-semibold text-[#1B5E20]">{f.name}</span>
                                     </button>
                                 ))}
                             </div>
+                            {/* Agriculture Fact */}
+                            {currentFact && (
+                                <div className="max-w-md bg-[#F1F8E9] border border-[#C5E1A5] rounded-xl p-4 text-left">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-1">Did you know? · {currentFact.crop}</p>
+                                    <p className="text-sm text-[#33691E]">{currentFact.fact}</p>
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        messages.map((msg, idx) => (
-                            <div key={idx} className={`flex gap-4 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                {msg.role !== 'user' && (
+                    )}
+
+                    {/* Messages */}
+                    {messages.length > 0 && (
+                        messages.map((msg, i) => (
+                            <div
+                                key={i}
+                                className={`flex items-end gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                            >
+                                {/* Assistant avatar */}
+                                {msg.role === 'assistant' && (
                                     <div className="w-8 h-8 rounded-full bg-[#1B5E20] flex items-center justify-center mt-2 flex-shrink-0">
                                         <Bot className="w-5 h-5 text-white" />
                                     </div>
                                 )}
 
-                                <div className={`relative max-w-[85%] md:max-w-[70%] rounded-[24px] shadow-sm ${msg.role === 'user'
-                                    ? 'bg-[#1B5E20] text-white rounded-tr-sm p-5'
-                                    : msg.content === '' && msg.role === 'assistant'
-                                        ? '' // No bubble wrapper for fact card
-                                        : 'bg-[#FAFCFC] text-[#002105] border border-[#E0E6E6] rounded-tl-sm pr-20 p-5'
-                                    }`}>
-
-                                    {/* Loading Fact Card — shown when assistant content is empty (streaming hasn't started) */}
-                                    {msg.role === 'assistant' && msg.content === '' && currentFact ? (
-                                        <div className="bg-gradient-to-br from-[#1B5E20] to-[#2E7D32] text-white rounded-[24px] rounded-tl-sm p-6 shadow-lg w-[260px] sm:w-[320px] md:w-[400px]">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <span className="text-xs font-black uppercase tracking-[0.2em] text-green-200">{t.chatbot?.doYouKnow || 'Do You Know?'}</span>
-                                            </div>
-                                            <p className="text-sm leading-relaxed text-white/95 mb-4 font-medium">
-                                                {currentFact.fact}
-                                            </p>
-                                            <div className="border-t border-white/20 pt-3 flex items-center gap-2">
-                                                <div className="flex gap-1">
-                                                    <span className="w-1.5 h-1.5 bg-green-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                                                    <span className="w-1.5 h-1.5 bg-green-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                                                    <span className="w-1.5 h-1.5 bg-green-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                                                </div>
-                                                <span className="text-xs text-green-200 font-bold tracking-widest flex items-center">
-                                                    {t.chatbot?.thinking || 'Thinking'}<span className="thinking-dots min-w-[20px]"></span>
+                                <div
+                                    className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3 ${
+                                        msg.role === 'user'
+                                            ? 'bg-[#1B5E20] text-white rounded-br-sm'
+                                            : 'bg-white border border-gray-200 text-[#002105] rounded-bl-sm shadow-sm'
+                                    }`}
+                                >
+                                    {/* Loading / streaming indicator */}
+                                    {msg.role === 'assistant' && !msg.content && isLoading && i === messages.length - 1 ? (
+                                        <div className="flex flex-col gap-2 min-w-[180px]">
+                                            <div className="flex items-center gap-2">
+                                                <span className="flex gap-1">
+                                                    <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                    <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                    <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                                 </span>
+                                                <span className="text-xs text-stone-400">Thinking...</span>
                                             </div>
+                                            {currentFact && (
+                                                <div className="mt-2 border-t border-gray-100 pt-2">
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-0.5">Did you know? · {currentFact.crop}</p>
+                                                    <p className="text-xs text-stone-500">{currentFact.fact}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <>
-                                            {/* Message Actions (TTS) - Only for Assistant with content */}
-                                            {msg.role !== 'user' && msg.content && (
-                                                <div className="absolute top-3 right-3 flex items-center gap-1">
-                                                    <button
-                                                        onClick={() => handleTextToSpeech(msg.content, idx)}
-                                                        className={`p-1.5 rounded-full transition-all ${playingMessageId === idx
-                                                            ? 'text-red-500 hover:bg-red-50'
-                                                            : 'text-stone-400 hover:text-[#1B5E20] hover:bg-stone-100'
-                                                            }`}
-                                                        title={playingMessageId === idx ? "Stop playback" : "Listen to response"}
-                                                        disabled={isLoadingTTS === idx}
-                                                    >
-                                                        {isLoadingTTS === idx ? (
-                                                            <div className="w-4 h-4 border-2 border-stone-300 border-t-[#1B5E20] rounded-full animate-spin"></div>
-                                                        ) : playingMessageId === idx ? (
-                                                            <Square className="w-4 h-4 fill-current" />
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm, remarkBreaks]}
+                                                components={{
+                                                    code: ({ node, className, children, ...props }) => {
+                                                        const isBlock = className?.includes('language-');
+                                                        return isBlock ? (
+                                                            <pre className="bg-black/10 rounded-lg p-3 my-2 overflow-x-auto text-sm font-mono">
+                                                                <code className={className} {...props}>{children}</code>
+                                                            </pre>
                                                         ) : (
-                                                            <Volume2 className="w-4 h-4" />
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            <div className={`text-[15px] leading-relaxed markdown-body whitespace-pre-wrap ${msg.role === 'user' ? 'text-white' : ''}`}>
-                                                <ReactMarkdown
-                                                    remarkPlugins={[remarkGfm, remarkBreaks]}
-                                                    components={{
-                                                        strong: ({ node, ...props }) => <span className={`font-bold ${msg.role === 'user' ? 'text-white' : 'text-[#1B5E20]'}`} {...props} />,
-                                                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
-                                                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
-                                                        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                                                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                                        h1: ({ node, ...props }) => <h1 className="text-xl font-bold mt-4 mb-2" {...props} />,
-                                                        h2: ({ node, ...props }) => <h2 className="text-lg font-bold mt-3 mb-2" {...props} />,
-                                                    }}
+                                                            <code className="bg-black/10 rounded px-1 py-0.5 text-sm font-mono" {...props}>{children}</code>
+                                                        );
+                                                    },
+                                                    strong: ({ node, ...props }) => <span className={`font-bold ${msg.role === 'user' ? 'text-white' : 'text-[#1B5E20]'}`} {...props} />,
+                                                    ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
+                                                    ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
+                                                    li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                                    p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                                    h1: ({ node, ...props }) => <h1 className="text-xl font-bold mt-4 mb-2" {...props} />,
+                                                    h2: ({ node, ...props }) => <h2 className="text-lg font-bold mt-3 mb-2" {...props} />,
+                                                }}
+                                            >
+                                                {msg.content || ""}
+                                            </ReactMarkdown>
+                                            {/* TTS Button */}
+                                            {msg.role === 'assistant' && msg.content && (
+                                                <button
+                                                    onClick={() => handleTextToSpeech(msg.content, i)}
+                                                    disabled={isLoadingTTS === i}
+                                                    className="mt-2 flex items-center gap-1 text-[10px] text-stone-400 hover:text-[#1B5E20] transition-colors"
                                                 >
-                                                    {msg.content || ""}
-                                                </ReactMarkdown>
-                                            </div>
+                                                    {isLoadingTTS === i ? (
+                                                        <span className="animate-pulse">Loading...</span>
+                                                    ) : playingMessageId === i ? (
+                                                        <><Square className="w-3 h-3 fill-current" /> Stop</>
+                                                    ) : (
+                                                        <><Volume2 className="w-3 h-3" /> Listen</>
+                                                    )}
+                                                </button>
+                                            )}
                                         </>
                                     )}
                                 </div>
@@ -831,10 +794,10 @@ const Chatbot: React.FC = () => {
                         {t.aiDisclaimer}
                     </p>
                 </div>
-            </ChatLayout >
+            </ChatLayout>
 
             {/* Delete Confirmation Modal */}
-            < DeleteConfirmationModal
+            <DeleteConfirmationModal
                 isOpen={deleteModalOpen}
                 onClose={() => {
                     if (!isDeleting) {
@@ -858,7 +821,7 @@ const Chatbot: React.FC = () => {
                     { label: 'Detector', onClick: () => navigate('/crop-care') }
                 ] : undefined}
             />
-        </div >
+        </div>
     );
 };
 
