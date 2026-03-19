@@ -30,6 +30,9 @@ import {
     Target
 } from 'lucide-react';
 import { getUserProfile } from '../src/services/firebase_db';
+import { ChatLayout } from '../components/ChatLayout';
+import { AdvisorySidebar } from '../components/AdvisorySidebar';
+import { Menu } from 'lucide-react';
 
 interface FormData {
     // A. Financial
@@ -262,6 +265,7 @@ const BusinessAdvisory: React.FC = () => {
     const [showExpertModal, setShowExpertModal] = useState(false);
     const [connectingExpert, setConnectingExpert] = useState<number | null>(null);
     const [backendSessionId, setBackendSessionId] = useState<string | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const [formData, setFormData] = useState<FormData>({
         budget: '',
@@ -465,6 +469,7 @@ const BusinessAdvisory: React.FC = () => {
         }, 1500);
     };
 
+    const renderContent = () => {
     // ─── STEP 0: LANDING ──────────────────────────────────────────────────────
     if (step === 0) {
         return (
@@ -1280,6 +1285,33 @@ const BusinessAdvisory: React.FC = () => {
     }
 
     return null;
+    };
+
+    return (
+        <div className="h-[calc(100vh-68px)] p-0 md:p-4 lg:p-6 bg-gray-50">
+            <ChatLayout sidebar={
+                <AdvisorySidebar
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    recentAdvisories={recommendations}
+                />
+            }>
+                <div className="flex flex-col h-full w-full">
+                    {/* Mobile Header */}
+                    <div className="md:hidden flex items-center p-4 border-b border-[#E0E6E6] bg-white/80 backdrop-blur-md sticky top-0 z-10">
+                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 mr-2">
+                            <Menu className="w-6 h-6 text-[#002105]" />
+                        </button>
+                        <h1 className="text-lg font-bold text-[#002105]">{t.businessAdvisorTitle || 'Business Advisory'}</h1>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto w-full">
+                        {renderContent()}
+                    </div>
+                </div>
+            </ChatLayout>
+        </div>
+    );
 };
 
 export default BusinessAdvisory;

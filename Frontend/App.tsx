@@ -62,7 +62,6 @@ const Header: React.FC<{
   const { language, setLanguage, t } = useLanguage();
   const { activeFarm, setActiveFarm, farms } = useFarm();
   const { theme, toggleTheme } = useTheme();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
     { label: t.navHome, path: '/' },
@@ -110,14 +109,14 @@ const Header: React.FC<{
 
           {/* Right Side */}
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Mobile Menu Button */}
+            {/* Mobile News Button instead of Menu */}
             {user && (
-              <button
-                className="lg:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              <Link
+                to="/news"
+                className="lg:hidden px-4 py-2 bg-[#2E7D32] text-white font-bold text-sm tracking-widest uppercase rounded-lg hover:bg-white/20 transition-all border border-white/20 shadow-sm"
               >
-                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
+                {t.navNews || 'News'}
+              </Link>
             )}
 
             {user && (
@@ -221,47 +220,7 @@ const Header: React.FC<{
             )}
           </div>
         </div >
-      </div >
-
-      {/* Mobile Menu Dropdown */}
-      {
-        isMobileMenuOpen && user && (
-          <div className="lg:hidden bg-[#1B5E20] border-t border-[#2E7D32] absolute w-full left-0 top-[64px] shadow-xl animate-in slide-in-from-top-2 z-40">
-            <nav className="flex flex-col p-4 space-y-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`px-4 py-3 text-sm font-bold uppercase tracking-wide rounded-lg transition-colors ${location.pathname === item.path ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}
-                >
-                  {item.label}
-                </Link>
-              ))}
-
-              {/* Mobile Profile & Logout */}
-              <div className="pt-4 mt-2 border-t border-white/10">
-                <Link
-                  to="/profile/edit"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-white/80 hover:bg-white/10 rounded-lg"
-                >
-                  <Settings size={18} /> {t.editProfile}
-                </Link>
-                <button
-                  onClick={() => {
-                    logout();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
-                >
-                  <LogOut size={18} /> {t.logout}
-                </button>
-              </div>
-            </nav>
-          </div>
-        )
-      }
+      </div>
     </header>
   );
 };
@@ -1031,7 +990,8 @@ const AppContent: React.FC = () => {
           />
 
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Chatbot />} />
+            <Route path="/plan" element={<Home />} />
             <Route path="/advisory" element={<BusinessAdvisory />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/health" element={<FarmHealth />} />
@@ -1045,11 +1005,10 @@ const AppContent: React.FC = () => {
             <Route path="/roadmap/:businessName" element={<Roadmap />} />
             <Route path="/planner" element={<Planner />} />
             <Route path="/profile/edit" element={<EditProfile />} />
-            <Route path="/chat" element={<Chatbot />} />
           </Routes>
 
-          {/* Floating Chatbot Button — hidden on the chat page itself */}
-          {location.pathname !== '/chat' && (
+          {/* Floating Chatbot Button — hidden on home and chatbot pages */}
+          {location.pathname !== '/' && location.pathname !== '/plan' && location.pathname !== '/chat' && (
             <Link
               to="/chat"
               className="fixed bottom-6 right-6 w-16 h-16 bg-white hover:bg-gray-50 text-[#1B5E20] rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 z-50 group border-2 border-[#1B5E20]"

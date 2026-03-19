@@ -1,12 +1,11 @@
 import React from 'react';
-import { Plus, MessageSquare, X, Trash2 } from 'lucide-react';
+import { MessageSquare, Plus, Trash2, X } from 'lucide-react';
 import { ChatSession } from '../src/services/chatService';
-import { useLanguage } from '../src/context/LanguageContext';
 
 interface ChatSidebarProps {
     chats: ChatSession[];
     activeChatId: string | null;
-    onSelectChat: (chatId: string) => void;
+    onSelectChat: (id: string) => void;
     onNewChat: () => void;
     onDeleteChat: (chatId: string, chatTitle: string) => void;
     isOpen: boolean;
@@ -22,107 +21,84 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     isOpen,
     onClose
 }) => {
-    const { t } = useLanguage();
-
     return (
         <>
             {/* Mobile Overlay */}
             {isOpen && (
-                <div
-                    className="fixed inset-0 bg-black/20 z-40 md:hidden"
+                <div 
+                    className="fixed inset-0 bg-black/50 z-20 md:hidden"
                     onClick={onClose}
                 />
             )}
 
             {/* Sidebar Container */}
             <div className={`
-        fixed md:relative 
-        z-50 md:z-auto
-        w-[280px] md:w-full 
-        h-full 
-        bg-white/60 backdrop-blur-md
-        border-r border-[#E6E6E6]
-        transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        flex flex-col
-      `}>
-                {/* Header / New Chat */}
-                <div className="p-4 border-b border-[#E6E6E6]">
-                    <div className="flex justify-between items-center md:hidden mb-4">
-                        <h2 className="font-bold text-[#1E1E1E]">{t.chat.menu}</h2>
-                        <button onClick={onClose} className="p-2">
-                            <X className="w-5 h-5 text-[#555555]" />
-                        </button>
-                    </div>
-
-                    <button
-                        onClick={onNewChat}
-                        className="w-full py-3 px-4 bg-[#1B5E20] text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#144919] transition-all shadow-sm"
-                    >
-                        <Plus className="w-5 h-5" />
-                        {t.chat.newChat}
+                fixed md:absolute inset-y-0 left-0 bg-white md:bg-transparent z-30
+                w-[280px] md:w-full h-full border-r border-[#E0E6E6] flex flex-col
+                transition-transform duration-300 ease-in-out
+                ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+            `}>
+                <div className="p-4 flex items-center justify-between border-b border-[#E0E6E6]">
+                    <h2 className="text-lg font-bold text-[#002105]">Chats</h2>
+                    <button onClick={onClose} className="md:hidden p-2 text-stone-500 hover:text-stone-800">
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* Chat List */}
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <div className="p-4">
+                    <button
+                        onClick={() => {
+                            onNewChat();
+                            onClose();
+                        }}
+                        className="w-full flex items-center justify-center gap-2 p-3 bg-[#1B5E20] text-white rounded-xl hover:bg-[#1B5E20]/90 transition-colors font-medium"
+                    >
+                        <Plus className="w-5 h-5" />
+                        New Chat
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-2">
                     {chats.length === 0 ? (
-                        <div className="text-center text-[#555555] text-sm mt-10 p-4">
-                            <p>{t.chat.noHistory}</p>
-                            <p className="text-xs mt-2 opacity-70">{t.chat.startNew}</p>
-                        </div>
+                        <p className="text-center text-sm text-stone-500 mt-4">No recent chats</p>
                     ) : (
                         chats.map(chat => (
-                            <div
+                            <div 
                                 key={chat.id}
                                 className={`
-                        relative w-full text-left p-3 rounded-xl transition-all group
-                        ${activeChatId === chat.id
-                                        ? 'bg-[#E8F5E9] text-[#1B5E20] font-bold border border-[#1B5E20]/10'
-                                        : 'text-[#555555] hover:bg-white hover:shadow-sm border border-transparent'}
-                    `}
+                                    group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors
+                                    ${activeChatId === chat.id 
+                                        ? 'bg-[#E8F5E9] text-[#1B5E20]' 
+                                        : 'hover:bg-stone-50 text-stone-700'
+                                    }
+                                `}
+                                onClick={() => {
+                                    onSelectChat(chat.id);
+                                    onClose();
+                                }}
                             >
-                                <button
-                                    onClick={() => {
-                                        onSelectChat(chat.id);
-                                        onClose();
-                                    }}
-                                    className="w-full text-left"
-                                >
-                                    <div className="flex items-center gap-3 pr-8">
-                                        <MessageSquare className={`w-4 h-4 flex-shrink-0 ${activeChatId === chat.id ? 'text-[#1B5E20]' : 'text-stone-400'}`} />
-                                        <div className="flex-1 overflow-hidden">
-                                            <p className="truncate text-sm">{chat.title || t.chat.newChat}</p>
-                                            {chat.updatedAt && (
-                                                <p className="text-[10px] opacity-60 mt-0.5 font-normal">
-                                                    {new Date(chat.updatedAt?.seconds * 1000 || Date.now()).toLocaleDateString()}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </button>
-
-                                {/* Delete Button */}
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <MessageSquare className={`w-5 h-5 flex-shrink-0 ${activeChatId === chat.id ? 'text-[#1B5E20]' : 'text-stone-400'}`} />
+                                    <span className="truncate text-sm font-medium">
+                                        {chat.title || 'New Chat'}
+                                    </span>
+                                </div>
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        onDeleteChat(chat.id, chat.title || t.chat.newChat);
+                                        onDeleteChat(chat.id, chat.title || 'New Chat');
+                                        onClose(); // Optional: close sidebar on delete? Maybe not.
                                     }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg opacity-0 group-hover:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity hover:bg-red-50"
-                                    aria-label={t.chat.delete}
-                                    title={t.chat.delete}
+                                    className="p-1.5 md:opacity-0 md:group-hover:opacity-100 text-stone-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                    title="Delete chat"
                                 >
-                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                    <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
                         ))
                     )}
                 </div>
-
-                {/* Footer / User Info could go here */}
-                {/* <div className="p-4 border-t border-[#E6E6E6]"> ... </div> */}
             </div>
         </>
     );
 };
-

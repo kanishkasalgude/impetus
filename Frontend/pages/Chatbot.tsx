@@ -11,10 +11,16 @@ import {
     Menu,
     Bot,
     User,
+    Map,
+    Briefcase,
+    Newspaper,
 
     Mic,
     Volume2,
-    Square
+    Square,
+    Trash2,
+    Recycle,
+    BookOpen
 } from 'lucide-react';
 import { api } from '../src/services/api';
 import { auth, onAuthStateChanged } from '../firebase';
@@ -30,6 +36,7 @@ import { chatService, ChatSession, Message } from '../src/services/chatService';
 import { ChatLayout } from '../components/ChatLayout';
 import { ChatSidebar } from '../components/ChatSidebar';
 import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
+import { FeatureConfirmationModal } from '../components/FeatureConfirmationModal';
 
 
 const AGRICULTURE_FACTS = [
@@ -76,9 +83,31 @@ const Chatbot: React.FC = () => {
     const [chatToDelete, setChatToDelete] = useState<{ id: string; title: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Feature Modal State
+    const [featureModalOpen, setFeatureModalOpen] = useState(false);
+    const [selectedFeature, setSelectedFeature] = useState<{ id: string; name: string; description: string; path?: string } | null>(null);
 
+    const featureButtons = [
+        { id: 'plan', name: 'Plan', description: 'Create and view 10-year roadmaps for your farm.', path: '/plan', icon: <Map className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
+        { id: 'advisory', name: 'Business Advisory', description: 'Get business recommendations based on your farm and market.', path: '/advisory', icon: <Briefcase className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
+        { id: 'waste', name: 'Waste Management', description: 'Explore waste to value strategies or disease/pest detectors.', icon: <Recycle className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
+        { id: 'hub', name: 'Knowledge Hub', description: 'Browse the latest articles, schemes and farming news.', path: '/hub', icon: <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> }
+    ];
 
-    // Agriculture Fact Loading State
+    const handleFeatureSelect = (feature: any) => {
+        setSelectedFeature(feature);
+        setFeatureModalOpen(true);
+    };
+
+    const handleFeatureConfirm = () => {
+        setFeatureModalOpen(false);
+        if (selectedFeature?.path) {
+            navigate(selectedFeature.path);
+        } else {
+            // It's the Chatbot itself - focus input or just close
+            (document.querySelector('input[placeholder]') as HTMLInputElement)?.focus();
+        }
+    };    // Agriculture Fact Loading State
     const [currentFact, setCurrentFact] = useState<{ crop: string; fact: string } | null>(null);
     const lastFactIndexRef = useRef<number>(-1);
 
@@ -613,13 +642,24 @@ const Chatbot: React.FC = () => {
                     Simple approach: If fromAdvisory, showing the back button bar above is fine. 
                 */}
                 {!location.state?.fromAdvisory && !location.state?.fromCropCare && !location.state?.fromFarmHealth && !location.state?.fromPlanner && (
-                    <div className="md:hidden flex items-center p-4 border-b border-[#E0E6E6] bg-white/80 backdrop-blur-md sticky top-0 z-10">
-                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 mr-2">
-                            <Menu className="w-6 h-6 text-[#002105]" />
-                        </button>
-                        <h1 className="text-lg font-bold text-[#002105]">
-                            {location.state?.isRoadmapPlanner ? `${t.chatbot?.makingPlan || 'Making 10-year plan for'} ${location.state?.businessName}...` : (t.chatbot?.askAI || 'Ask AI')}
-                        </h1>
+                    <div className={`flex items-center p-4 border-b border-[#E0E6E6] bg-white/80 backdrop-blur-md sticky top-0 z-10 w-full overflow-x-auto no-scrollbar ${messages.length === 0 ? 'md:hidden' : ''}`}>
+                        <div className="md:hidden flex items-center flex-shrink-0">
+                            <button onClick={() => setIsSidebarOpen(true)} className="p-2 mr-2">
+                                <Menu className="w-6 h-6 text-[#002105]" />
+                            </button>
+                        </div>
+                        
+                        {messages.length > 0 ? (
+                            <div className="flex items-center gap-2 flex-nowrap min-w-max">
+                                <button onClick={() => navigate('/')} className="px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap bg-[#1B5E20] text-white">Chatbot</button>
+                                <button onClick={() => navigate('/plan')} className="px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap bg-[#F1F8E9] text-[#1B5E20] hover:bg-[#E8F5E9] transition-colors border border-[#E0E6E6]">Plan</button>
+                                <button onClick={() => navigate('/advisory')} className="px-4 py-2 rounded-full font-bold text-sm whitespace-nowrap bg-[#F1F8E9] text-[#1B5E20] hover:bg-[#E8F5E9] transition-colors border border-[#E0E6E6]">Business Advisory</button>
+                            </div>
+                        ) : (
+                            <h1 className="text-lg font-bold text-[#002105] md:hidden">
+                                {location.state?.isRoadmapPlanner ? `${t.chatbot?.makingPlan || 'Making 10-year plan for'} ${location.state?.businessName}...` : ''}
+                            </h1>
+                        )}
                     </div>
                 )}
 
@@ -630,12 +670,22 @@ const Chatbot: React.FC = () => {
                     className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6"
                 >
                     {messages.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
-                            <div className="w-24 h-24 bg-[#FAFCFC] rounded-[32px] flex items-center justify-center mb-6">
-                                <Bot className="w-12 h-12 text-[#1B5E20]" />
+                        <div className="h-full flex flex-col items-center justify-center">
+                            <h2 className="text-2xl font-black text-[#002105] mb-8 uppercase tracking-widest opacity-80">{(t.chatbot as any)?.selectFeature || 'Select Feature'}</h2>
+                            <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-2xl px-4">
+                                {featureButtons.map((feature) => (
+                                    <button
+                                        key={feature.id}
+                                        onClick={() => handleFeatureSelect(feature)}
+                                        className="group flex flex-col items-center gap-3 p-6 md:p-8 rounded-3xl bg-white border-2 border-transparent hover:border-[#1B5E20] shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all"
+                                    >
+                                        <div className="w-16 h-16 md:w-20 md:h-20 bg-[#F1F8E9] group-hover:bg-[#E8F5E9] rounded-full flex items-center justify-center transition-colors border border-green-50 shadow-inner">
+                                            {feature.icon}
+                                        </div>
+                                        <span className="font-bold text-[#002105] text-center text-sm md:text-base">{feature.name}</span>
+                                    </button>
+                                ))}
                             </div>
-                            <h2 className="text-2xl font-bold text-[#002105] mb-2">{t.chatbot?.askAI || 'Ask AI'}</h2>
-                            <p className="max-w-xs mx-auto text-[#6B7878]">{t.chatbot?.askSubtitle || 'Ask about crop diseases, market prices, or farming techniques.'}</p>
                         </div>
                     ) : (
                         messages.map((msg, idx) => (
@@ -796,9 +846,20 @@ const Chatbot: React.FC = () => {
                 chatTitle={chatToDelete?.title || ''}
                 isDeleting={isDeleting}
             />
+
+            <FeatureConfirmationModal
+                isOpen={featureModalOpen}
+                onClose={() => setFeatureModalOpen(false)}
+                onConfirm={handleFeatureConfirm}
+                featureName={selectedFeature?.name || ''}
+                featureDescription={selectedFeature?.description || ''}
+                options={selectedFeature?.id === 'waste' ? [
+                    { label: 'Waste to Value', onClick: () => navigate('/waste-to-value') },
+                    { label: 'Detector', onClick: () => navigate('/crop-care') }
+                ] : undefined}
+            />
         </div >
     );
 };
 
 export default Chatbot;
-
