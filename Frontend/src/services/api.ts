@@ -2,7 +2,7 @@ import { auth } from "../../firebase";
 
 // Dynamically derive the backend URL from the browser's current hostname.
 // This makes it work for both localhost dev and LAN/mobile access without any config changes.
-const BASE_URL = import.meta.env.VITE_API_URL ||
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL ||
     `http://${window.location.hostname}:5000/api`;
 
 const getHeaders = async (): Promise<HeadersInit | any> => {
@@ -14,6 +14,8 @@ const getHeaders = async (): Promise<HeadersInit | any> => {
 
     const headers: any = {
         'Content-Type': 'application/json',
+        'Bypass-Tunnel-Reminder': 'true',
+        'ngrok-skip-browser-warning': 'true'
     };
     if (auth.currentUser) {
         const token = await auth.currentUser.getIdToken(true); // Force refresh to ensure valid

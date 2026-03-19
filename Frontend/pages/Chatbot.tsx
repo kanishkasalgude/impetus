@@ -169,19 +169,21 @@ const Chatbot: React.FC = () => {
         try {
             const token = await user?.getIdToken();
             const langCode = lang.toLowerCase(); // 'en', 'hi', or 'mr'
-            const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+            const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
             const response = await fetch(`${API_BASE_URL}/voice/tts`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Bypass-Tunnel-Reminder': 'true',
+                    'ngrok-skip-browser-warning': 'true'
                 },
                 body: JSON.stringify({ text, language: langCode })
             });
 
             const data = await response.json();
             if (data.success && data.audio_url) {
-                const ORIGIN_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
+                const ORIGIN_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
                 const audio = new Audio(`${ORIGIN_URL}${data.audio_url}`);
                 audioRef.current = audio;
                 setPlayingMessageId(messageId);
@@ -215,11 +217,13 @@ const Chatbot: React.FC = () => {
                 setIsLoading(true);
                 try {
                     const token = await user?.getIdToken();
-                    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
                     const response = await fetch(`${API_BASE_URL}/voice/stt`, {
                         method: 'POST',
                         headers: {
-                            'Authorization': `Bearer ${token}`
+                            'Authorization': `Bearer ${token}`,
+                            'Bypass-Tunnel-Reminder': 'true',
+                            'ngrok-skip-browser-warning': 'true'
                         },
                         body: formData
                     });
@@ -561,12 +565,14 @@ const Chatbot: React.FC = () => {
                     try {
                         setIsGeneratingTitle(true);
                         const token = await user?.getIdToken();
-                        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+                        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
                         const titleRes = await fetch(`${API_BASE_URL}/chat/generate-title`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${token}`
+                                'Authorization': `Bearer ${token}`,
+                                'Bypass-Tunnel-Reminder': 'true',
+                                'ngrok-skip-browser-warning': 'true'
                             },
                             body: JSON.stringify({ session_id: currentBackendId })
                         });

@@ -27,12 +27,12 @@ export default defineConfig(({ mode }) => {
           scope: '/',
           icons: [
             {
-              src: 'icon_192.png',
+              src: 'https://krishisahai-advisory.web.app/icon_192.png',
               sizes: '192x192',
               type: 'image/png'
             },
             {
-              src: 'icon_512.png',
+              src: 'https://krishisahai-advisory.web.app/icon_512.png',
               sizes: '512x512',
               type: 'image/png'
             }

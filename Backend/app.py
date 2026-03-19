@@ -80,7 +80,7 @@ if os.getenv('FLASK_ENV') == 'development':
     CORS(app, resources={r"/api/*": {
         "origins": "*",
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"],
+        "allow_headers": ["Content-Type", "Authorization", "Bypass-Tunnel-Reminder", "ngrok-skip-browser-warning"],
         "supports_credentials": False  # Must be False when origins='*'
     }})
 else:
