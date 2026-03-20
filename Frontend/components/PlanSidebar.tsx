@@ -9,41 +9,42 @@ interface PlanSidebarProps {
     onClose: () => void;
     selectedCrop: string | null;
     setSelectedCrop: (crop: string) => void;
+    isDrawer?: boolean;
 }
 
 export const PlanSidebar: React.FC<PlanSidebarProps> = ({
     isOpen,
     onClose,
     selectedCrop,
-    setSelectedCrop
+    setSelectedCrop,
+    isDrawer = false
 }) => {
     const { activeFarm, setActiveFarm, farms } = useFarm();
     const { t, language } = useLanguage();
 
     const uniqueCrops = activeFarm?.crops 
-        ? [...new Set(activeFarm.crops.map(c => normalizeValue(c, 'crops')))]
+        ? [...new Set(activeFarm.crops)]
         : [];
 
     return (
         <>
-            {/* Mobile Overlay */}
             {isOpen && (
                 <div 
-                    className="fixed inset-0 bg-black/50 z-20 md:hidden"
+                    className={`fixed inset-0 bg-black/50 z-[100] ${isDrawer ? '' : 'md:hidden'}`}
                     onClick={onClose}
                 />
             )}
 
             {/* Sidebar Container */}
             <div className={`
-                fixed md:absolute inset-y-0 left-0 bg-white md:bg-transparent z-30
-                w-[280px] md:w-full h-full border-r border-[#E0E6E6] flex flex-col
+                fixed inset-y-0 left-0 bg-white shadow-2xl z-[110]
+                w-[280px] md:w-[320px] h-full border-r border-[#E0E6E6] flex flex-col
                 transition-transform duration-300 ease-in-out
-                ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+                ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 <div className="p-4 flex items-center justify-between border-b border-[#E0E6E6]">
                     <h2 className="text-lg font-bold text-[#002105]">Planner Options</h2>
-                    <button onClick={onClose} className="md:hidden p-2 text-stone-500 hover:text-stone-800">
+                    <button onClick={onClose} className={`${isDrawer ? '' : 'md:hidden'} p-2 text-stone-500 hover:text-stone-800`}>
                         <X className="w-5 h-5" />
                     </button>
                 </div>

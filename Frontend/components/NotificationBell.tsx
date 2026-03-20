@@ -144,10 +144,10 @@ const NotificationBell: React.FC = () => {
             {/* Bell Button */}
             <button
                 onClick={() => setIsOpen(prev => !prev)}
-                className="relative flex items-center justify-center w-10 h-10 bg-[#FAFAF7] border border-[#E6E6E6] rounded-full hover:bg-[#E8F5E9] transition-all"
+                className="relative flex items-center justify-center w-12 h-12 bg-[#FAFAF7] border border-[#E6E6E6] rounded-full hover:bg-[#E8F5E9] transition-all shadow-sm group"
                 title={t.notifications.title}
             >
-                <Bell size={18} className="text-[#043744]" />
+                <Bell size={22} className="text-[#043744] group-hover:scale-110 transition-transform" />
                 {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md animate-pulse">
                         {unreadCount}

@@ -20,7 +20,9 @@ import {
     Square,
     Trash2,
     Recycle,
-    BookOpen
+    BookOpen,
+    Sprout,
+    Wheat
 } from 'lucide-react';
 import { api } from '../src/services/api';
 import { auth, onAuthStateChanged } from '../firebase';
@@ -78,6 +80,12 @@ const Chatbot: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        const handleToggle = () => setIsSidebarOpen(prev => !prev);
+        window.addEventListener('toggle-sidebar', (handleToggle as EventListener));
+        return () => window.removeEventListener('toggle-sidebar', (handleToggle as EventListener));
+    }, []);
+
     // Delete Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [chatToDelete, setChatToDelete] = useState<{ id: string; title: string } | null>(null);
@@ -88,15 +96,21 @@ const Chatbot: React.FC = () => {
     const [selectedFeature, setSelectedFeature] = useState<{ id: string; name: string; description: string; path?: string } | null>(null);
 
     const featureButtons = [
+        { id: 'disease-pest', name: 'Disease & Pest', description: 'Detect diseases and pests in your crops using AI.', path: '/crop-care', icon: <Sprout className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
         { id: 'plan', name: 'Plan', description: 'Create and view 10-year roadmaps for your farm.', path: '/plan', icon: <Map className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
         { id: 'advisory', name: 'Business Advisory', description: 'Get business recommendations based on your farm and market.', path: '/advisory', icon: <Briefcase className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
-        { id: 'waste', name: 'Waste Management', description: 'Explore waste to value strategies or disease/pest detectors.', icon: <Recycle className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
-        { id: 'hub', name: 'Knowledge Hub', description: 'Browse the latest articles, schemes and farming news.', path: '/hub', icon: <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> }
+        { id: 'waste', name: 'Waste to Value', description: 'Explore profitable ways to reuse, sell, or compost farm waste.', path: '/waste-to-value', icon: <Recycle className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> }
     ];
 
     const handleFeatureSelect = (feature: any) => {
-        setSelectedFeature(feature);
-        setFeatureModalOpen(true);
+        if (feature.id === 'plan') {
+            setSelectedFeature(feature);
+            setFeatureModalOpen(true);
+        } else if (feature.path) {
+            navigate(feature.path);
+        } else {
+            (document.querySelector('input[placeholder]') as HTMLInputElement)?.focus();
+        }
     };
 
     const handleFeatureConfirm = () => {
@@ -387,6 +401,22 @@ const Chatbot: React.FC = () => {
         isAtBottomRef.current = true;
     };
 
+    // 3.5 Handle Greeting from Floating Button
+    useEffect(() => {
+        if (location.state?.newChatWithGreeting && user) {
+            handleNewChat();
+            
+            const newState = { ...location.state, newChatWithGreeting: undefined };
+            window.history.replaceState(newState, document.title);
+            
+            setTimeout(() => {
+                setMessages([
+                    { role: 'assistant', content: (t.chatbot as any)?.greeting || "Namaste! I am KrishiSahAI. How can I help you today?", createdAt: new Date() }
+                ]);
+            }, 50);
+        }
+    }, [location.state, user]);
+
     const handleDeleteChat = (chatId: string, chatTitle: string) => {
         setChatToDelete({ id: chatId, title: chatTitle });
         setDeleteModalOpen(true);
@@ -612,7 +642,10 @@ const Chatbot: React.FC = () => {
 
     return (
         <div className="h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] max-w-7xl mx-auto md:p-6 p-0">
-            <ChatLayout sidebar={Sidebar}>
+            {Sidebar}
+            <ChatLayout>
+                {/* Messages Container */}
+
                 {/* Messages Container */}
                 <div
                     ref={chatContainerRef}
@@ -623,29 +656,31 @@ const Chatbot: React.FC = () => {
                     {messages.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center h-full text-center py-12 gap-6">
                             <div className="w-16 h-16 bg-[#1B5E20]/10 rounded-full flex items-center justify-center">
-                                <Bot className="w-8 h-8 text-[#1B5E20]" />
+                                <User className="w-8 h-8 text-[#1B5E20]" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-bold text-[#1B5E20]">Welcome to KrishiSahAI</h2>
-                                <p className="text-stone-500 mt-1 text-sm">Ask me anything about farming, crops, or your land.</p>
+                                <h2 className="text-2xl font-bold text-[#1B5E20]">{t.chatbot?.welcomeTitle || "Welcome to KrishiSahAI"}</h2>
+                                <p className="text-stone-500 mt-1 text-sm">{t.chatbot?.welcomeSub || "Ask me anything about farming, crops, weather, or government schemes."}</p>
                             </div>
                             {/* Feature Buttons */}
-                            <div className="grid grid-cols-2 gap-3 w-full max-w-md mt-2">
+                            <div className="grid grid-cols-2 gap-4 w-full max-w-lg mt-4 px-2">
                                 {featureButtons.map((f) => (
                                     <button
                                         key={f.id}
                                         onClick={() => handleFeatureSelect(f)}
-                                        className="flex flex-col items-center gap-2 p-4 bg-white border-2 border-[#E0E6E6] hover:border-[#1B5E20] rounded-xl text-center transition-all shadow-sm hover:shadow-md"
+                                        className="flex flex-col items-center justify-center gap-3 p-6 md:p-8 bg-white border-2 border-[#E0E6E6] hover:border-[#1B5E20] rounded-2xl text-center transition-all shadow-sm hover:shadow-lg active:scale-95 min-h-[120px] md:min-h-[140px]"
                                     >
-                                        {f.icon}
-                                        <span className="text-xs font-semibold text-[#1B5E20]">{f.name}</span>
+                                        <div className="w-12 h-12 md:w-14 md:h-14 bg-[#E8F5E9] rounded-xl flex items-center justify-center">
+                                            {f.icon}
+                                        </div>
+                                        <span className="text-sm md:text-base font-bold text-[#1B5E20]">{f.name}</span>
                                     </button>
                                 ))}
                             </div>
                             {/* Agriculture Fact */}
                             {currentFact && (
                                 <div className="max-w-md bg-[#F1F8E9] border border-[#C5E1A5] rounded-xl p-4 text-left">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-1">Did you know? · {currentFact.crop}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-1">{t.chatbot?.doYouKnow || "Did you know?"} · {currentFact.crop}</p>
                                     <p className="text-sm text-[#33691E]">{currentFact.fact}</p>
                                 </div>
                             )}
@@ -659,12 +694,7 @@ const Chatbot: React.FC = () => {
                                 key={i}
                                 className={`flex items-end gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                             >
-                                {/* Assistant avatar */}
-                                {msg.role === 'assistant' && (
-                                    <div className="w-8 h-8 rounded-full bg-[#1B5E20] flex items-center justify-center mt-2 flex-shrink-0">
-                                        <Bot className="w-5 h-5 text-white" />
-                                    </div>
-                                )}
+
 
                                 <div
                                     className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3 ${
@@ -682,11 +712,11 @@ const Chatbot: React.FC = () => {
                                                     <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                                     <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                                 </span>
-                                                <span className="text-xs text-stone-400">Thinking...</span>
+                                                <span className="text-xs text-stone-400">{t.chatbot?.thinking || "Thinking"}...</span>
                                             </div>
                                             {currentFact && (
                                                 <div className="mt-2 border-t border-gray-100 pt-2">
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-0.5">Did you know? · {currentFact.crop}</p>
+                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-0.5">{t.chatbot?.doYouKnow || "Did you know?"} · {currentFact.crop}</p>
                                                     <p className="text-xs text-stone-500">{currentFact.fact}</p>
                                                 </div>
                                             )}
@@ -737,11 +767,7 @@ const Chatbot: React.FC = () => {
                                     )}
                                 </div>
 
-                                {msg.role === 'user' && (
-                                    <div className="w-8 h-8 rounded-full bg-[#E8F5E9] flex items-center justify-center mt-2 flex-shrink-0">
-                                        <User className="w-5 h-5 text-[#1B5E20]" />
-                                    </div>
-                                )}
+
                             </div>
                         ))
                     )}
@@ -750,7 +776,7 @@ const Chatbot: React.FC = () => {
                     {location.state?.isRoadmapPlanner && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && !messages[messages.length - 1].content && (
                         <div className="flex flex-col items-center justify-center p-12 text-center animate-pulse">
                             <div className="w-16 h-16 bg-deep-green/10 rounded-full flex items-center justify-center mb-4">
-                                <Bot className="w-8 h-8 text-deep-green" />
+                                <User className="w-8 h-8 text-deep-green" />
                             </div>
                             <h3 className="text-xl font-bold text-deep-green">
                                 {t.chatbot?.makingPlan || 'Making 10-year plan for'} {location.state?.businessName}...
@@ -770,11 +796,11 @@ const Chatbot: React.FC = () => {
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                             placeholder={t.chatPlaceholder}
-                            className="w-full p-4 pr-28 bg-[#FAFCFC] border-2 border-[#E0E6E6] focus:outline-none focus:border-deep-green focus:ring-0 transition-all font-medium placeholder:text-stone-400 text-[#002105]"
+                            className="w-full p-4 pr-20 bg-[#FAFCFC] border-2 border-[#E0E6E6] rounded-2xl focus:outline-none focus:border-deep-green focus:ring-0 transition-all font-medium placeholder:text-stone-400 text-[#002105]"
                         />
 
                         {/* Mic Button */}
-                        <div className="absolute right-20 top-1/2 -translate-y-1/2 z-10 border-r border-gray-300 pr-2">
+                        <div className="absolute right-20 top-1/2 -translate-y-1/2 z-10">
                             <button
                                 onClick={isRecording ? stopRecording : startRecording}
                                 disabled={isLoading}
@@ -791,7 +817,7 @@ const Chatbot: React.FC = () => {
                         <button
                             onClick={() => handleSend()}
                             disabled={!input.trim() || isLoading}
-                            className="p-4 bg-deep-green text-white hover:bg-deep-green/90 disabled:opacity-50 disabled:bg-stone-300 transition-all shadow-md min-w-[3.5rem] flex items-center justify-center"
+                            className="p-4 bg-deep-green text-white hover:bg-deep-green/90 rounded-2xl disabled:opacity-50 disabled:bg-stone-300 transition-all shadow-md min-w-[3.5rem] flex items-center justify-center"
                         >
                             <Send className="w-5 h-5" />
                         </button>
@@ -822,10 +848,6 @@ const Chatbot: React.FC = () => {
                 onConfirm={handleFeatureConfirm}
                 featureName={selectedFeature?.name || ''}
                 featureDescription={selectedFeature?.description || ''}
-                options={selectedFeature?.id === 'waste' ? [
-                    { label: 'Waste to Value', onClick: () => navigate('/waste-to-value') },
-                    { label: 'Detector', onClick: () => navigate('/crop-care') }
-                ] : undefined}
             />
         </div>
     );

@@ -40,7 +40,8 @@
     "back": "पीछे",
     "step": "चरण",
     "other": "अन्य",
-    "navHome": "योजना",
+    "navHome": "होम",
+    "navPlan": "10-वर्षीय योजना",
     "navAdvisory": "सलाह",
     "navNews": "समाचार",
     "navKnowledge": "ज्ञान",
@@ -820,6 +821,13 @@
     "chatbot": {
         "askAI": "AI से पूछें",
         "askSubtitle": "फसल रोग, बाजार भाव या खेती की तकनीकों के बारे में पूछें।",
+        "welcomeTitle": "कृषिसहाय में आपका स्वागत है",
+        "welcomeSub": "मुझसे खेती, फसलों, मौसम या सरकारी योजनाओं के बारे में कुछ भी पूछें।",
+        "featureDiseasePest": "रोग और कीट",
+        "featurePlan": "योजना",
+        "featureWaste": "अपशिष्ट से मूल्य",
+        "featureWeather": "मौसम",
+        "askKrishiSahAI": "कृषिसहाय से पूछें",
         "doYouKnow": "क्या आप जानते हैं?",
         "thinking": "सोच रहा है",
         "errorConnect": "त्रुटि: AI से कनेक्ट नहीं हो सका। कृपया फिर से प्रयास करें।",
@@ -827,5 +835,28 @@
         "makingPlan": "के लिए 10-वर्षीय योजना बना रहे हैं",
         "analyzingMarket": "बाजार के रुझान और क्षेत्रीय डेटा का विश्लेषण कर रहे हैं।"
     },
-    "history": "इतिहास"
+    "history": "इतिहास",
+    "waste": {
+        "circularEconomy": "परिचालन अर्थव्यवस्था",
+        "recentSuccessStories": "हाल की सफलता की कहानियाँ",
+        "successStory1": "रमेश ने ₹1200 में 50 किलो केले का तना बेचा",
+        "successStory2": "अनीता ने खट्टे छिलकों से बायो-एंजाइम बनाया",
+        "analyzeYourWaste": "अपने कचरे का विश्लेषण करें",
+        "takePhotoOrUpload": "शुरू करने के लिए एक फोटो लें या छवि अपलोड करें।",
+        "uploadWastePhoto": "कचरे का फोटो अपलोड करें",
+        "skipToManualInput": "मैनुअल इनपुट पर जाएं",
+        "manualWasteInput": "मैनुअल कचरा इनपुट",
+        "describeWaste": "मूल्यवान उपयोग खोजने के लिए अपने खेत के कचरे का वर्णन करें।",
+        "farmCrops": "{farm} की फसलें",
+        "yourFarmCrops": "आपके खेत की फसलें"
+    },
+    "sidebar": {
+        "diseaseHistory": "रोग का इतिहास",
+        "pestHistory": "कीट का इतिहास",
+        "wasteHistory": "कचरे का इतिहास",
+        "noDetections": "अभी तक कोई पहचान नहीं",
+        "noWasteHistory": "पिछला कोई कचरा विश्लेषण नहीं मिला।",
+        "resultsAppearHere": "विश्लेषण चलाने के बाद परिणाम यहां दिखाई देंगे।",
+        "clearHistory": "इतिहास साफ़ करें"
+    }
 }

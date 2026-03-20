@@ -7,6 +7,7 @@ import { useLanguage } from '../src/context/LanguageContext';
 import { useFarm } from '../src/context/FarmContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { PlanSidebar } from '../components/PlanSidebar';
 
 interface YearPlan {
     year: string;
@@ -34,6 +35,7 @@ const Planner: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [roadmap, setRoadmap] = useState<RoadmapData | null>(null);
     const [error, setError] = useState('');
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const contentRef = useRef<HTMLDivElement>(null);
 
     const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
@@ -43,6 +45,13 @@ const Planner: React.FC = () => {
             setSelectedCrop(activeFarm.crops[0]);
         }
     }, [activeFarm]);
+
+    // Sidebar Toggle Logic
+    useEffect(() => {
+        const handleToggle = () => setIsSidebarOpen(prev => !prev);
+        window.addEventListener('toggle-sidebar', (handleToggle as EventListener));
+        return () => window.removeEventListener('toggle-sidebar', (handleToggle as EventListener));
+    }, []);
 
     useEffect(() => {
         const fetchCropRoadmap = async () => {
@@ -131,8 +140,8 @@ const Planner: React.FC = () => {
 
     if (!selectedCrop && activeFarm?.crops && activeFarm.crops.length > 1) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gray-50/50">
-                <div className="max-w-2xl w-full bg-white rounded-[32px] shadow-xl p-8 md:p-12 border border-[#E6E6E6] text-center">
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-6 md:p-8">
+                <div className="max-w-2xl w-full p-4 md:p-12 text-center">
                     <div className="inline-flex items-center justify-center p-4 bg-[#E6F4EA] rounded-full mb-6">
                         <TrendingUp className="w-10 h-10 text-[#1B5E20]" />
                     </div>
@@ -151,12 +160,7 @@ const Planner: React.FC = () => {
                         ))}
                     </div>
 
-                    <button
-                        onClick={() => navigate('/')}
-                        className="flex items-center justify-center gap-2 mx-auto px-6 py-3 text-gray-500 font-bold hover:text-gray-800 transition-all uppercase tracking-wider text-sm"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Go Back
-                    </button>
+
                 </div>
             </div>
         );
@@ -182,14 +186,15 @@ const Planner: React.FC = () => {
 
     return (
         <div className="min-h-screen p-4 md:p-8">
+            <PlanSidebar
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+                selectedCrop={selectedCrop || ''}
+                setSelectedCrop={setSelectedCrop}
+            />
             <div className="max-w-5xl mx-auto">
                 <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="flex items-center gap-2 px-6 py-3 bg-deep-green text-white font-bold hover:bg-deep-green/90 transition-all shadow-md uppercase tracking-wider"
-                    >
-                        <ArrowLeft className="w-5 h-5" /> {t.backToHome || 'Back to Home'}
-                    </button>
+
 
                     <div className="flex items-center gap-4">
                         {activeFarm?.crops && activeFarm.crops.length > 1 && (

@@ -123,13 +123,7 @@ const ArticleDetail: React.FC = () => {
                     className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/10" />
-                <Link
-                    to="/hub"
-                    className="absolute top-8 left-4 md:left-8 text-white bg-deep-green/80 backdrop-blur-md p-3 rounded-full hover:bg-deep-green transition-all transform hover:scale-105"
-                    aria-label="Back to Knowledge Hub"
-                >
-                    <ArrowLeft size={24} />
-                </Link>
+
             </div>
 
             {/* Content Container - Keyed by language to force full re-render */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
 import BusinessAdvisory from './pages/BusinessAdvisory';
 import CropCare from './pages/CropCare';
@@ -20,7 +20,7 @@ import { Language, UserProfile, Farm } from './types';
 
 import { auth, db, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from './firebase';
 import { onSnapshot, doc, setDoc, getDoc } from 'firebase/firestore';
-import { MapPin, Settings, LogOut, Menu, X, Plus, User, Info, Smartphone, CheckCircle, ArrowRight, ChevronRight, Wind, Droplets, Thermometer, Sun, CloudRain, RefreshCw, Cloud } from 'lucide-react';
+import { MapPin, Settings, LogOut, Menu, X, Plus, User, Info, Smartphone, CheckCircle, ArrowRight, ChevronRight, Wind, Droplets, Thermometer, Sun, CloudRain, RefreshCw, Cloud, Newspaper, BookOpen, Sprout, Layout, Briefcase, Recycle, Map, ArrowLeft, MessageSquare } from 'lucide-react';
 import { api } from './src/services/api';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
@@ -59,6 +59,7 @@ const Header: React.FC<{
   onAuthSwitch: (view: 'login' | 'signup') => void;
 }> = ({ toggleNotifications, toggleWeather, user, logout, weatherData, weatherLoading, refreshWeather, onAuthSwitch }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const { activeFarm, setActiveFarm, farms } = useFarm();
   const { theme, toggleTheme } = useTheme();
@@ -76,24 +77,53 @@ const Header: React.FC<{
     return `${weatherData.temperature}°C`;
   };
 
+  const isFeaturePage = location.pathname !== '/' && location.pathname !== '/chat';
+
+  const quickFeatures = [
+    { icon: <Sprout size={22} />, path: '/crop-care', label: t.navCropCare },
+    { icon: <Layout size={22} />, path: '/plan', label: t.navPlan },
+    { icon: <Briefcase size={22} />, path: '/advisory', label: t.navAdvisory },
+    { icon: <Recycle size={22} />, path: '/waste-to-value', label: t.navWaste },
+  ];
+
   return (
-    <header className="fixed top-0 z-[60] w-full bg-[#1B5E20] border-b-4 border-[#2E7D32] shadow-md">
+    <header className="fixed top-0 z-[60] w-full bg-[#1B5E20] border-b border-[#2E7D32] shadow-md transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-[64px]">
-          {/* Brand */}
-          <Link to="/" className="flex items-center gap-3 group mr-8">
-            <div className="flex items-center justify-center">
-              <img src={logo} alt="Logo" className="h-[50px] w-auto object-contain brightness-0 invert" />
-            </div>
-            <div className="hidden md:flex flex-col justify-center h-full">
-              <span className="text-xl font-bold text-white tracking-tight leading-none">
-                {t.brandName}
-              </span>
-            </div>
-          </Link>
+          {/* Left: Hamburger Menu */}
+          <div className="flex items-center gap-1 md:gap-3">
+            {/* Always available Hamburger for mobile sidebar toggling */}
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
+              className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors md:hidden"
+            >
+              <Menu size={24} />
+            </button>
+          </div>
 
-          {/* Desktop Navigation */}
-          {user && (
+          {/* Center: Feature Navigation (bigger icons + labels) - Shown on feature pages */}
+          {user && isFeaturePage && (
+            <div className="flex items-center gap-1 md:gap-2 mx-auto">
+              {quickFeatures.map((f) => (
+                <Link
+                  key={f.path}
+                  to={f.path}
+                  title={f.label}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all active:scale-95 ${
+                    (f.path === '/' ? location.pathname === '/' : location.pathname.startsWith(f.path))
+                      ? 'bg-white text-[#1B5E20] shadow-lg' 
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {f.icon}
+                  <span className="hidden sm:inline">{f.label}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Desktop Navigation (Main Links) - Hidden on feature pages if many icons, or keep it? The user said "add buttons here only" */}
+          {user && !isFeaturePage && (
             <nav className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => (
                 <Link
@@ -108,55 +138,28 @@ const Header: React.FC<{
           )}
 
           {/* Right Side */}
-          <div className="flex items-center gap-2 md:gap-4">
-            {/* Mobile News Button instead of Menu */}
-            {user && (
-              <Link
-                to="/news"
-                className="lg:hidden px-4 py-2 bg-[#2E7D32] text-white font-bold text-sm tracking-widest uppercase rounded-lg hover:bg-white/20 transition-all border border-white/20 shadow-sm"
-              >
-                {t.navNews || 'News'}
-              </Link>
-            )}
-
-            {user && (
-              <>
-                {/* Weather Info (Desktop) */}
-                <div className={`hidden sm:flex items-center gap-1 bg-[#FAFAF7] border border-[#E6E6E6] rounded-full hover:rounded-lg px-1 py-0.5 transition-all group ${weatherLoading ? 'opacity-80' : ''}`}>
-                  <button
-                    onClick={toggleWeather}
-                    className="flex items-center gap-3 px-4 py-2 bg-transparent text-xs font-bold text-[#1B5E20] hover:bg-green-50 transition-all border-r border-gray-200"
-                    title="View Weather Details"
-                  >
-                    <span className="text-lg">☁</span>
-                    <span className="uppercase tracking-wider">
-                      {getDisplayLocation(activeFarm, language)}: {getWeatherDisplay()}
-                    </span>
-                  </button>
-                  <button
-                    onClick={refreshWeather}
-                    className={`p-2 hover:bg-green-50 text-[#1B5E20] transition-all ${weatherLoading ? 'animate-spin' : 'hover:rotate-180'}`}
-                    title="Refresh Weather"
-                  >
-                    <RefreshCw size={14} />
-                  </button>
-                </div>
-
-                {/* Weather Button (Mobile) */}
-                <button
-                  onClick={toggleWeather}
-                  className="sm:hidden relative flex items-center justify-center w-10 h-10 bg-[#FAFAF7] border border-[#E6E6E6] rounded-full hover:bg-[#E8F5E9] transition-all"
-                  title="Weather"
+          <div className="flex items-center gap-2 md:gap-4 relative z-50">
+            {user && !isFeaturePage && (
+              <div className="flex items-center gap-3 md:gap-6 mr-2">
+                <Link 
+                  to="/news" 
+                  className="relative flex items-center justify-center w-12 h-12 bg-[#FAFAF7] border border-[#E6E6E6] rounded-full hover:bg-[#E8F5E9] transition-all shadow-sm group"
+                  title={t.navNews || "News"}
                 >
-                  <Cloud size={18} className="text-[#043744]" />
+                   <Newspaper size={22} className="text-[#043744] group-hover:scale-110 transition-transform" />
+                </Link>
+                <button 
+                  onClick={toggleWeather} 
+                  className="relative flex items-center justify-center w-12 h-12 bg-[#FAFAF7] border border-[#E6E6E6] rounded-full hover:bg-[#E8F5E9] transition-all shadow-sm group"
+                  title={(t as any).navWeather || "Weather"}
+                >
+                   <Cloud size={22} className="text-[#043744] group-hover:scale-110 transition-transform" />
                 </button>
-
-                {/* Notifications */}
-                <NotificationBell />
-              </>
+                <div className="flex items-center justify-center">
+                  <NotificationBell />
+                </div>
+              </div>
             )}
-
-
             {user ? (
               <div className="relative group">
                 <button className="flex items-center gap-2 md:gap-3 bg-white/5 border border-white/20 px-3 py-2 md:px-4 md:py-2 hover:bg-white/10 transition-colors rounded-xl">
@@ -191,6 +194,27 @@ const Header: React.FC<{
                     </div>
                   </div>
 
+                  {isFeaturePage && (
+                      <div className="flex items-center w-full px-5 py-2 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                        <NotificationBell />
+                      </div>
+                  )}
+                  <Link to="/" className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                    <Layout size={16} /> {t.navHome || "Home"}
+                  </Link>
+                  {isFeaturePage && (
+                    <>
+                      <Link to="/news" className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                        <Newspaper size={16} /> {t.navNews || "News"}
+                      </Link>
+                      <button onClick={toggleWeather} className="flex items-center gap-3 w-full px-5 py-4 text-left text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                        <Cloud size={16} /> {(t as any).navWeather || "Weather"}
+                      </button>
+                    </>
+                  )}
+                  <Link to="/hub" className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                    <BookOpen size={16} /> {t.navHub || "Knowledge Hub"}
+                  </Link>
                   <Link to="/profile/edit" className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
                     <Settings size={16} /> {t.editProfile}
                   </Link>
@@ -840,6 +864,7 @@ const AppContent: React.FC = () => {
   const { setLanguage, t, language } = useLanguage();
   const { setFarms, setActiveFarm, activeFarm } = useFarm();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [authView, setAuthView] = useState<'login' | 'signup'>('login');
@@ -989,8 +1014,21 @@ const AppContent: React.FC = () => {
             location={getBestLocation(activeFarm)}
           />
 
+          {location.pathname !== '/' && location.pathname !== '/chat' && (
+            <div className="max-w-7xl mx-auto px-4 pt-4 pb-2">
+              <button 
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-[#1B5E20] font-bold text-xl hover:text-green-800 transition-colors"
+              >
+                <ArrowLeft size={28} />
+                <span>{t.back || 'Back'}</span>
+              </button>
+            </div>
+          )}
+
           <Routes>
             <Route path="/" element={<Chatbot />} />
+            <Route path="/chat" element={<Chatbot />} />
             <Route path="/plan" element={<Home />} />
             <Route path="/advisory" element={<BusinessAdvisory />} />
             <Route path="/news" element={<NewsPage />} />
@@ -1011,10 +1049,11 @@ const AppContent: React.FC = () => {
           {location.pathname !== '/' && location.pathname !== '/plan' && location.pathname !== '/chat' && (
             <Link
               to="/chat"
+              state={{ newChatWithGreeting: true }}
               className="fixed bottom-6 right-6 w-16 h-16 bg-white hover:bg-gray-50 text-[#1B5E20] rounded-full flex items-center justify-center shadow-2xl transition-all hover:scale-110 z-50 group border-2 border-[#1B5E20]"
               title="Chat with AI"
             >
-              <img src={logo} alt="Chatbot" className="w-10 h-10 object-contain drop-shadow" />
+              <img src={logo} alt="KrishiSahAI" className="w-10 h-10 object-contain" />
 
               {/* Tooltip */}
               <span className="absolute right-full mr-4 bg-white text-[#1B5E20] px-3 py-1.5 rounded-lg text-sm font-bold shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap border border-green-100">

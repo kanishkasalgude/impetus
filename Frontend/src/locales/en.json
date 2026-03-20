@@ -40,7 +40,8 @@
     "back": "Back",
     "step": "Step",
     "other": "Other",
-    "navHome": "Plan",
+    "navHome": "Home",
+    "navPlan": "10-Year Plan",
     "navAdvisory": "Advisory",
     "navNews": "News",
     "navKnowledge": "Knowledge",
@@ -48,7 +49,7 @@
     "navAbout": "About",
     "navContact": "Contact",
     "navCropCare": "Crop Care",
-    "navWaste": "Waste2Value",
+    "navWaste": "Waste to Value",
     "navHub": "Knowledge Hub",
     "login": "Login",
     "loginTitle": "Welcome Back",
@@ -820,12 +821,42 @@
     "chatbot": {
         "askAI": "Ask AI",
         "askSubtitle": "Ask about crop diseases, market prices, or farming techniques.",
-        "doYouKnow": "Do You Know?",
+        "welcomeTitle": "Welcome to KrishiSahAI",
+        "welcomeSub": "Ask me anything about farming, crops, weather, or government schemes.",
+        "featureDiseasePest": "Disease & Pest",
+        "featurePlan": "Plan",
+        "featureWaste": "Waste to Value",
+        "featureWeather": "Weather",
+        "askKrishiSahAI": "Ask KrishiSahAI",
+        "doYouKnow": "Did you know?",
         "thinking": "Thinking",
         "errorConnect": "Error: Could not connect to AI. Please try again.",
         "errorSession": "Error: Failed to initialize AI session. Please refresh the page.",
         "makingPlan": "Making 10-year plan for",
         "analyzingMarket": "Analyzing market trends and regional data."
     },
-    "history": "History"
+    "history": "History",
+    "waste": {
+        "circularEconomy": "Circular Economy",
+        "recentSuccessStories": "Recent Success Stories",
+        "successStory1": "Ramesh sold 50kg Banana stem for ₹1200",
+        "successStory2": "Anita created Bio-enzyme from citrus peel",
+        "analyzeYourWaste": "Analyze Your Waste",
+        "takePhotoOrUpload": "Take a photo or upload an image to get started.",
+        "uploadWastePhoto": "Upload Waste Photo",
+        "skipToManualInput": "Skip to Manual Input",
+        "manualWasteInput": "Manual Waste Input",
+        "describeWaste": "Describe your farm waste to find valuable uses.",
+        "farmCrops": "{farm}'s Crops",
+        "yourFarmCrops": "Your Farm Crops"
+    },
+    "sidebar": {
+        "diseaseHistory": "Disease History",
+        "pestHistory": "Pest History",
+        "wasteHistory": "Waste History",
+        "noDetections": "No detections yet",
+        "noWasteHistory": "No previous waste analysis found.",
+        "resultsAppearHere": "Results will appear here once you run an analysis.",
+        "clearHistory": "Clear History"
+    }
 }

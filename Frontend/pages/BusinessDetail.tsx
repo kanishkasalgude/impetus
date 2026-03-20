@@ -57,12 +57,7 @@ const BusinessDetail: React.FC = () => {
     }, [id, location.state]);
 
     const handleBack = () => {
-        const stateData = location.state as any;
-        if (stateData?.fromAdvisory && stateData?.previousState) {
-            navigate('/advisory', { state: stateData.previousState });
-        } else {
-            navigate(-1);
-        }
+        navigate('/');
     };
 
     if (loading) {
@@ -73,12 +68,7 @@ const BusinessDetail: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-5xl mx-auto min-h-screen">
-            <button
-                onClick={handleBack}
-                className="flex items-center gap-2 text-[#555555] font-bold mb-6 hover:text-[#043744] transition-colors"
-            >
-                <ArrowLeft className="w-5 h-5" /> {t.backToRecs}
-            </button>
+
 
             <div className="bg-white rounded-[40px] border border-[#E6E6E6] shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="bg-[#043744] p-8 md:p-12 text-white relative overflow-hidden">
