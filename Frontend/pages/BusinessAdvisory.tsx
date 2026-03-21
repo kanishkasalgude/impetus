@@ -94,6 +94,12 @@ interface Recommendation {
 const BusinessAdvisory: React.FC = () => {
     const { language: lang, t } = useLanguage();
 
+    useEffect(() => {
+        const handleToggle = () => setIsSidebarOpen(prev => !prev);
+        window.addEventListener('toggle-sidebar', (handleToggle as EventListener));
+        return () => window.removeEventListener('toggle-sidebar', (handleToggle as EventListener));
+    }, []);
+
     const EXPERTS = [
         {
             id: 1,
@@ -474,14 +480,7 @@ const BusinessAdvisory: React.FC = () => {
     if (step === 0) {
         return (
             <div className="p-4 md:p-8 max-w-7xl mx-auto flex flex-col items-center justify-center min-h-[80vh] gap-4">
-                <div className="self-start">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="text-[#555555] font-bold hover:text-[#1B5E20] flex items-center gap-2 text-base md:text-lg transition-colors cursor-pointer"
-                    >
-                        <ArrowLeft className="w-5 h-5" /> {t.back}
-                    </button>
-                </div>
+
                 <div className="text-center py-10 md:py-20 px-6 md:px-10 bg-white rounded-[32px] md:rounded-[48px] border border-[#E6E6E6] shadow-xl max-w-3xl w-full">
                     <div className="w-16 h-16 md:w-24 md:h-24 bg-[#E8F5E9] rounded-full flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-sm">
                         <Briefcase className="w-8 h-8 md:w-12 md:h-12 text-[#1B5E20]" />
@@ -533,10 +532,7 @@ const BusinessAdvisory: React.FC = () => {
         return (
             <div className="p-4 md:p-8 max-w-4xl mx-auto min-h-screen">
                 {/* Navigation Header */}
-                <div className="mb-8 flex items-center justify-between">
-                    <button onClick={handleBack} className="flex items-center gap-2 text-[#555555] font-bold hover:text-[#1B5E20] transition-colors">
-                        <ArrowLeft className="w-5 h-5" /> {subStep === 1 ? t.back : t.advisory.steps.prevStep}
-                    </button>
+                <div className="mb-8 flex items-center justify-end">
                     <div className="flex items-center gap-4">
                         <div className="hidden md:block w-48 h-2 bg-[#E6E6E6] rounded-full overflow-hidden">
                             <div
@@ -600,9 +596,9 @@ const BusinessAdvisory: React.FC = () => {
                                     <label className="block text-lg font-bold text-[#1E1E1E]">{t.advisoryForm.budgetLabel}</label>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                         {['< 1 lakh', '1-3 lakh', '3-6 lakh', '6-10 lakh', '10+ lakh'].map(opt => (
-                                            <label key={opt} className={`flex flex-col items-center justify-center p-6 text-center rounded-[24px] border-2 cursor-pointer transition-all duration-300 ${formData.budget === opt ? 'border-[#1B5E20] bg-[#E8F5E9] shadow-lg ring-2 ring-[#1B5E20]/20 scale-105' : 'border-[#F1F5F9] bg-[#F8FAFC] hover:border-gray-300 hover:bg-white'}`}>
+                                            <label key={opt} className={`flex flex-col items-center justify-center p-3 md:p-4 text-center rounded-xl md:rounded-2xl border-2 cursor-pointer transition-all duration-300 ${formData.budget === opt ? 'border-[#1B5E20] bg-[#E8F5E9] shadow-md ring-1 ring-[#1B5E20]/20 scale-105' : 'border-[#F1F5F9] bg-[#F8FAFC] hover:border-gray-300 hover:bg-white'}`}>
                                                 <input type="radio" name="budget" value={opt} checked={formData.budget === opt} onChange={e => setFormData({ ...formData, budget: e.target.value })} className="sr-only" />
-                                                <DollarSign className={`w-8 h-8 mb-3 transition-colors ${formData.budget === opt ? 'text-[#1B5E20]' : 'text-gray-400'}`} />
+                                                <DollarSign className={`w-6 h-6 mb-2 transition-colors ${formData.budget === opt ? 'text-[#1B5E20]' : 'text-gray-400'}`} />
                                                 <span className={`text-sm font-bold ${formData.budget === opt ? 'text-[#1B5E20]' : 'text-[#64748B]'}`}>{opt}</span>
                                             </label>
                                         ))}
@@ -613,9 +609,9 @@ const BusinessAdvisory: React.FC = () => {
                                     <label className="block text-lg font-bold text-[#1E1E1E]">{t.advisoryForm.profitLabel}</label>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         {['< ₹10,000', '₹10,000 - ₹20,000', '₹20,000 - ₹50,000', 'Above ₹50,000'].map(opt => (
-                                            <label key={opt} className={`flex items-center p-6 rounded-[24px] border-2 cursor-pointer transition-all duration-300 ${formData.currentProfit === opt ? 'border-[#1B5E20] bg-[#E8F5E9] shadow-md' : 'border-[#F1F5F9] bg-[#F8FAFC] hover:border-gray-300'}`}>
-                                                <input type="radio" name="currentProfit" value={opt} checked={formData.currentProfit === opt} onChange={e => setFormData({ ...formData, currentProfit: e.target.value })} className="w-5 h-5 accent-[#1B5E20] mr-4" />
-                                                <span className={`text-base font-bold ${formData.currentProfit === opt ? 'text-[#1B5E20]' : 'text-[#64748B]'}`}>{opt}</span>
+                                            <label key={opt} className={`flex items-center p-3 md:p-4 rounded-xl md:rounded-2xl border-2 cursor-pointer transition-all duration-300 ${formData.currentProfit === opt ? 'border-[#1B5E20] bg-[#E8F5E9] shadow-sm' : 'border-[#F1F5F9] bg-[#F8FAFC] hover:border-gray-300'}`}>
+                                                <input type="radio" name="currentProfit" value={opt} checked={formData.currentProfit === opt} onChange={e => setFormData({ ...formData, currentProfit: e.target.value })} className="w-4 h-4 accent-[#1B5E20] mr-3" />
+                                                <span className={`text-sm md:text-base font-bold ${formData.currentProfit === opt ? 'text-[#1B5E20]' : 'text-[#64748B]'}`}>{opt}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -628,12 +624,12 @@ const BusinessAdvisory: React.FC = () => {
                                             { label: t.advisoryForm.intentFull.title, sub: t.advisoryForm.intentFull.sub, value: 'Full Replacement' },
                                             { label: t.advisoryForm.intentSide.title, sub: t.advisoryForm.intentSide.sub, value: 'Side Income' }
                                         ].map(opt => (
-                                            <label key={opt.value} className={`flex flex-col p-6 rounded-[24px] border-2 cursor-pointer transition-all duration-300 ${formData.runningPlan === opt.value ? 'border-[#1B5E20] bg-[#E8F5E9] shadow-md scale-[1.02]' : 'border-[#F1F5F9] bg-[#F8FAFC] hover:border-gray-300'}`}>
-                                                <div className="flex items-center mb-2">
-                                                    <input type="radio" name="runningPlan" value={opt.value} checked={formData.runningPlan === opt.value} onChange={e => setFormData({ ...formData, runningPlan: e.target.value })} className="w-5 h-5 accent-[#1B5E20] mr-4" />
-                                                    <span className={`font-extrabold ${formData.runningPlan === opt.value ? 'text-[#1B5E20]' : 'text-[#1E1E1E]'}`}>{opt.label}</span>
+                                            <label key={opt.value} className={`flex flex-col p-4 rounded-xl md:rounded-2xl border-2 cursor-pointer transition-all duration-300 ${formData.runningPlan === opt.value ? 'border-[#1B5E20] bg-[#E8F5E9] shadow-sm scale-[1.02]' : 'border-[#F1F5F9] bg-[#F8FAFC] hover:border-gray-300'}`}>
+                                                <div className="flex items-center mb-1">
+                                                    <input type="radio" name="runningPlan" value={opt.value} checked={formData.runningPlan === opt.value} onChange={e => setFormData({ ...formData, runningPlan: e.target.value })} className="w-4 h-4 accent-[#1B5E20] mr-3" />
+                                                    <span className={`text-sm font-extrabold ${formData.runningPlan === opt.value ? 'text-[#1B5E20]' : 'text-[#1E1E1E]'}`}>{opt.label}</span>
                                                 </div>
-                                                <span className="text-xs text-[#64748B] ml-9 font-medium">{opt.sub}</span>
+                                                <span className="text-xs text-[#64748B] ml-7 font-medium">{opt.sub}</span>
                                             </label>
                                         ))}
                                     </div>
@@ -1289,22 +1285,13 @@ const BusinessAdvisory: React.FC = () => {
 
     return (
         <div className="h-[calc(100vh-68px)] p-0 md:p-4 lg:p-6 bg-gray-50">
-            <ChatLayout sidebar={
-                <AdvisorySidebar
-                    isOpen={isSidebarOpen}
-                    onClose={() => setIsSidebarOpen(false)}
-                    recentAdvisories={recommendations}
-                />
-            }>
+            <AdvisorySidebar
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+                recentAdvisories={recommendations}
+            />
+            <ChatLayout>
                 <div className="flex flex-col h-full w-full">
-                    {/* Mobile Header */}
-                    <div className="md:hidden flex items-center p-4 border-b border-[#E0E6E6] bg-white/80 backdrop-blur-md sticky top-0 z-10">
-                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 mr-2">
-                            <Menu className="w-6 h-6 text-[#002105]" />
-                        </button>
-                        <h1 className="text-lg font-bold text-[#002105]">{t.businessAdvisorTitle || 'Business Advisory'}</h1>
-                    </div>
-
                     <div className="flex-1 overflow-y-auto w-full">
                         {renderContent()}
                     </div>

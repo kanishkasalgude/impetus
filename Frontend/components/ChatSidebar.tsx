@@ -23,20 +23,19 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
 }) => {
     return (
         <>
-            {/* Mobile Overlay */}
             {isOpen && (
                 <div 
-                    className="fixed inset-0 bg-black/50 z-20 md:hidden"
+                    className="fixed inset-0 bg-black/50 z-[100] md:hidden"
                     onClick={onClose}
                 />
             )}
 
             {/* Sidebar Container */}
             <div className={`
-                fixed md:absolute inset-y-0 left-0 bg-white md:bg-transparent z-30
-                w-[280px] md:w-full h-full border-r border-[#E0E6E6] flex flex-col
+                fixed inset-y-0 left-0 bg-white z-[110]
+                w-[280px] md:w-72 h-full border-r border-[#E0E6E6] flex flex-col
                 transition-transform duration-300 ease-in-out
-                ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+                ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 <div className="p-4 flex items-center justify-between border-b border-[#E0E6E6]">
                     <h2 className="text-lg font-bold text-[#002105]">Chats</h2>

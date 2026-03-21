@@ -62,6 +62,11 @@ const WasteToValue: React.FC = () => {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    useEffect(() => {
+        const handleToggle = () => setIsHistoryOpen(prev => !prev);
+        window.addEventListener('toggle-sidebar', (handleToggle as EventListener));
+        return () => window.removeEventListener('toggle-sidebar', (handleToggle as EventListener));
+    }, []);
 
     // Initial Greeting when entering results view
     useEffect(() => {
@@ -267,19 +272,20 @@ const WasteToValue: React.FC = () => {
         setView('input');
     };
 
+    const renderContent = () => {
     // --- RENDER VIEW: INPUT ---
     if (view === 'input' || view === 'intro') { // Modified to handle 'intro' and 'input' within this block
         return (
-            <div className="h-[calc(100vh-80px)] overflow-hidden flex flex-col md:flex-row max-w-[1600px] mx-auto bg-white">
+            <div className="min-h-[calc(100vh-80px)] overflow-hidden flex flex-col md:flex-row max-w-[1600px] mx-auto">
                 {/* LEFT: Hero/Intro Section (40%) */}
                 <div className={`w-full md:w-[40%] bg-deep-green text-white p-8 md:p-12 flex flex-col justify-between transition-all duration-500 relative overflow-hidden ${view !== 'intro' ? 'hidden md:flex' : 'flex'}`}>
                     {/* Background Pattern */}
                     <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px' }}></div>
 
                     <div className="relative z-10">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 border border-white/30 bg-white/10 mb-6 backdrop-blur-sm">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 border border-white/30 bg-white/10 mb-6 backdrop-blur-sm rounded-full">
                             <Recycle className="w-5 h-5" />
-                            <span className="text-sm font-bold uppercase tracking-widest">Circular Economy</span>
+                            <span className="text-sm font-bold uppercase tracking-widest">{t.waste?.circularEconomy || "Circular Economy"}</span>
                         </div>
                         <h1 className="text-4xl md:text-5xl font-extrabold leading-tight mb-4 tracking-tight">
                             {t.wasteOptimizer || "Turn Waste into Wealth"}
@@ -290,16 +296,16 @@ const WasteToValue: React.FC = () => {
                     </div>
 
                     <div className="relative z-10 mt-8">
-                        <div className="p-6 border border-white/20 bg-white/5 backdrop-blur-sm">
-                            <h3 className="text-sm font-bold uppercase tracking-wide mb-4 border-b border-white/20 pb-2">Recent Success Stories</h3>
+                        <div className="p-6 border border-white/20 bg-white/5 backdrop-blur-sm rounded-2xl">
+                            <h3 className="text-sm font-bold uppercase tracking-wide mb-4 border-b border-white/20 pb-2">{t.waste?.recentSuccessStories || "Recent Success Stories"}</h3>
                             <div className="space-y-4">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-2 h-2 bg-green-400"></div>
-                                    <p className="text-sm">Ramesh sold 50kg Banana stem for ₹1200</p>
+                                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                    <p className="text-sm">{t.waste?.successStory1 || "Ramesh sold 50kg Banana stem for ₹1200"}</p>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <div className="w-2 h-2 bg-green-400"></div>
-                                    <p className="text-sm">Anita created Bio-enzyme from citrus peel</p>
+                                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                    <p className="text-sm">{t.waste?.successStory2 || "Anita created Bio-enzyme from citrus peel"}</p>
                                 </div>
                             </div>
                         </div>
@@ -307,43 +313,38 @@ const WasteToValue: React.FC = () => {
                 </div>
 
                 {/* RIGHT: Interaction Area (60%) */}
-                <div className="w-full md:w-[60%] bg-gray-50 flex flex-col relative h-full">
+                <div className="w-full md:w-[60%] flex flex-col relative h-full">
                     {view === 'intro' && (
                         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white">
                             <div className="w-full max-w-md">
-                                <div className="w-20 h-20 bg-light-green text-deep-green flex items-center justify-center mx-auto mb-6">
+                                <div className="w-20 h-20 bg-light-green text-deep-green flex items-center justify-center mx-auto mb-6 rounded-full">
                                     <Camera className="w-10 h-10" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-deep-green mb-4 uppercase">Analyze Your Waste</h2>
-                                <p className="text-gray-600 mb-8">Take a photo or upload an image to get started.</p>
+                                <h2 className="text-2xl font-bold text-deep-green mb-4 uppercase">{t.waste?.analyzeYourWaste || "Analyze Your Waste"}</h2>
+                                <p className="text-gray-600 mb-8">{t.waste?.takePhotoOrUpload || "Take a photo or upload an image to get started."}</p>
 
                                 <label className="block w-full cursor-pointer group">
                                     <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                                    <div className="w-full py-5 bg-deep-green text-white font-bold text-lg uppercase tracking-widest hover:bg-deep-green/90 transition-all flex items-center justify-center gap-3 shadow-md group-active:scale-95">
-                                        <Upload className="w-6 h-6" /> Upload Waste Photo
+                                    <div className="w-full py-5 bg-deep-green text-white font-bold text-lg uppercase tracking-widest hover:bg-deep-green/90 transition-all flex items-center justify-center gap-3 shadow-md group-active:scale-95 rounded-2xl">
+                                        <Upload className="w-6 h-6" /> {t.waste?.uploadWastePhoto || "Upload Waste Photo"}
                                     </div>
                                 </label>
 
                                 <button onClick={() => setView('input')} className="mt-6 text-sm font-bold text-deep-green border-b border-deep-green hover:text-deep-blue hover:border-deep-blue transition-colors">
-                                    Skip to Manual Input
+                                    {t.waste?.skipToManualInput || "Skip to Manual Input"}
                                 </button>
                             </div>
                         </div>
                     )}
                     {view === 'input' && (
-                        <div className="flex-1 flex flex-col items-start justify-center p-6 md:p-8 bg-white">
-                            <button
-                                onClick={() => navigate('/')}
-                                className="text-gray-600 hover:text-deep-green flex items-center gap-2 font-bold text-base transition-colors mb-6"
-                            >
-                                <ArrowLeft className="w-5 h-5" /> {t.back}
-                            </button>
+                        <div className="flex-1 flex flex-col items-start justify-center p-6 md:p-8">
+
                             <div className="w-full max-w-md mx-auto">
-                                <div className="w-16 h-16 md:w-20 md:h-20 bg-light-green text-deep-green flex items-center justify-center mx-auto mb-6">
+                                <div className="w-16 h-16 md:w-20 md:h-20 bg-light-green text-deep-green flex items-center justify-center mx-auto mb-6 rounded-full">
                                     <Leaf className="w-8 h-8 md:w-10 md:h-10" />
                                 </div>
-                                <h2 className="text-xl md:text-2xl font-bold text-deep-green mb-4 uppercase text-center">Manual Waste Input</h2>
-                                <p className="text-gray-600 mb-8 text-center">Describe your farm waste to find valuable uses.</p>
+                                <h2 className="text-xl md:text-2xl font-bold text-deep-green mb-4 uppercase text-center">{t.waste?.manualWasteInput || "Manual Waste Input"}</h2>
+                                <p className="text-gray-600 mb-8 text-center">{t.waste?.describeWaste || "Describe your farm waste to find valuable uses."}</p>
 
                                 <form onSubmit={handleAnalyze} className="space-y-6">
                                     <div className="relative">
@@ -351,7 +352,7 @@ const WasteToValue: React.FC = () => {
                                             type="text"
                                             required
                                             placeholder={t.selectWaste || "e.g. Tomato, Rice Straw"}
-                                            className="w-full p-4 pl-12 text-lg bg-gray-100 border border-gray-300 focus:border-deep-green focus:ring-1 focus:ring-deep-green outline-none transition-all placeholder-gray-500"
+                                            className="w-full p-4 pl-12 text-lg bg-gray-100 border border-gray-300 rounded-2xl focus:border-deep-green focus:ring-1 focus:ring-deep-green outline-none transition-all placeholder-gray-500"
                                             value={cropInput}
                                             onChange={(e) => setCropInput(e.target.value)}
                                         />
@@ -361,7 +362,7 @@ const WasteToValue: React.FC = () => {
                                     {activeFarm && activeFarm.crops && activeFarm.crops.length > 0 && (
                                         <div className="mt-8 text-left">
                                             <h3 className="text-sm font-bold text-deep-green uppercase tracking-wider mb-4 border-l-4 border-deep-green pl-2">
-                                                {activeFarm.nickname ? `${activeFarm.nickname}'s Crops` : "Your Farm Crops"}
+                                                {activeFarm.nickname ? (t.waste?.farmCrops?.replace('{farm}', activeFarm.nickname) || `${activeFarm.nickname}'s Crops`) : (t.waste?.yourFarmCrops || "Your Farm Crops")}
                                             </h3>
                                             <div className="flex flex-wrap gap-3">
                                                 {activeFarm.crops.map((crop, idx) => (
@@ -369,7 +370,7 @@ const WasteToValue: React.FC = () => {
                                                         key={idx}
                                                         type="button"
                                                         onClick={() => handleActiveCropClick(crop)}
-                                                        className="px-4 py-2 bg-light-green text-deep-green border border-deep-green/20 font-bold hover:bg-deep-green hover:text-white transition-all transform hover:-translate-y-0.5"
+                                                        className="px-4 py-2 bg-light-green text-deep-green border border-deep-green/20 font-bold hover:bg-deep-green hover:text-white transition-all transform hover:-translate-y-0.5 rounded-full"
                                                     >
                                                         {crop}
                                                     </button>
@@ -382,9 +383,9 @@ const WasteToValue: React.FC = () => {
 
                                         type="submit"
                                         disabled={!cropInput.trim()}
-                                        className="w-full py-4 bg-deep-green hover:bg-deep-green/90 text-white text-lg font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-md group-active:scale-95"
+                                        className="w-full py-4 bg-deep-green hover:bg-deep-green/90 text-white text-lg font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-md group-active:scale-95 rounded-2xl"
                                     >
-                                        {t.analyze} <ArrowRight className="w-6 h-6" />
+                                        {t.analyze || "Analyze"} <ArrowRight className="w-6 h-6" />
                                     </button>
                                 </form>
                             </div>
@@ -658,57 +659,61 @@ const WasteToValue: React.FC = () => {
                     </div>
                 </div>
             )}
-            {/* History Drawer */}
-            {isHistoryOpen && (
-                <div className="fixed inset-0 z-[110] flex justify-end transition-all animate-in fade-in duration-300">
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsHistoryOpen(false)}></div>
-                    <div className="relative w-full max-w-sm bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-                        <div className="p-6 border-b border-[#E6E6E6] flex items-center justify-between bg-deep-green text-white">
-                            <h3 className="text-xl font-bold flex items-center gap-2">
-                                <History className="w-6 h-6" /> {t.history || "Waste History"}
-                            </h3>
-                            <button onClick={() => setIsHistoryOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-                            {chats.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-40">
-                                    <FileText className="w-12 h-12 mb-4" />
-                                    <p>No previous waste analysis found.</p>
-                                </div>
-                            ) : (
-                                chats.map((chat) => (
-                                    <button
-                                        key={chat.id}
-                                        onClick={() => {
-                                            setActiveChatId(chat.id);
-                                            setIsHistoryOpen(false);
-                                        }}
-                                        className={`w-full p-4 rounded-2xl border transition-all flex items-center gap-4 text-left group ${activeChatId === chat.id
-                                            ? 'bg-light-green border-deep-green shadow-sm'
-                                            : 'bg-white border-[#E6E6E6] hover:border-deep-green hover:shadow-md'
-                                            }`}
-                                    >
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activeChatId === chat.id ? 'bg-deep-green text-white' : 'bg-gray-100 text-deep-green group-hover:bg-deep-green group-hover:text-white'
-                                            }`}>
-                                            <Recycle className="w-5 h-5" />
-                                        </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <h4 className="font-bold text-deep-green truncate">{chat.title}</h4>
-                                            <p className="text-xs text-gray-400 mt-1">
-                                                {chat.updatedAt?.toDate ? chat.updatedAt.toDate().toLocaleDateString() : 'Recent'}
-                                            </p>
-                                        </div>
-                                        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-deep-green" />
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
+    );
+    };
+
+    return (
+        <React.Fragment>
+            {renderContent()}
+            {/* History Sidebar - matches DetectionHistorySidebar style */}
+            {isHistoryOpen && (
+                <div className="fixed inset-0 bg-black/30 z-[100] md:hidden" onClick={() => setIsHistoryOpen(false)} />
+            )}
+            <div className={`fixed top-0 left-0 h-full w-72 bg-white border-r border-gray-200 shadow-xl z-[110] transform transition-transform duration-300 ${isHistoryOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex items-center justify-between p-4 border-b border-[#1B5E20]/30">
+                    <div className="flex items-center gap-2 font-bold text-[#1B5E20]">
+                        <History size={18} /> {t.sidebar?.wasteHistory || "Waste History"}
+                    </div>
+                    <button onClick={() => setIsHistoryOpen(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-3 space-y-2" style={{ maxHeight: 'calc(100vh - 80px)' }}>
+                    {chats.length === 0 ? (
+                        <div className="text-center text-gray-400 py-12">
+                            <History size={32} className="mx-auto mb-3 opacity-40" />
+                            <p className="text-sm font-medium">{t.sidebar?.noWasteHistory || 'No previous waste analysis found.'}</p>
+                            <p className="text-xs mt-1">{t.sidebar?.resultsAppearHere || 'Results will appear here'}</p>
+                        </div>
+                    ) : (
+                        chats.map((chat) => (
+                            <button
+                                key={chat.id}
+                                onClick={() => {
+                                    setActiveChatId(chat.id);
+                                    setIsHistoryOpen(false);
+                                }}
+                                className={`w-full text-left p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all group ${activeChatId === chat.id ? 'bg-[#E8F5E9] border-[#1B5E20]' : ''}`}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 rounded-lg bg-[#1B5E2015] text-[#1B5E20]">
+                                        <Recycle size={16} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-gray-800 truncate">{chat.title}</p>
+                                        <p className="text-xs text-gray-400">
+                                            {chat.updatedAt?.toDate ? chat.updatedAt.toDate().toLocaleDateString() : 'Recent'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </button>
+                        ))
+                    )}
+                </div>
+            </div>
+        </React.Fragment>
     );
 };
 

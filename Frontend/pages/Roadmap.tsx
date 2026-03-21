@@ -145,18 +145,7 @@ const Roadmap: React.FC = () => {
             <div className="max-w-5xl mx-auto">
                 {/* Header Actions */}
                 <div className="flex items-center justify-between mb-8 no-print">
-                    <button
-                        onClick={() => {
-                            if (location.state?.previousState) {
-                                navigate('/advisory', { state: location.state.previousState });
-                            } else {
-                                navigate('/advisory');
-                            }
-                        }}
-                        className="flex items-center gap-2 px-6 py-3 bg-deep-green text-white font-bold hover:bg-deep-green/90 transition-all shadow-md uppercase tracking-wider"
-                    >
-                        <ArrowLeft className="w-5 h-5" /> {t.backToAdvisory}
-                    </button>
+
                 </div>
 
                 {/* Printable Content */}

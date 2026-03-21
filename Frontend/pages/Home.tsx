@@ -145,27 +145,25 @@ const Home: React.FC = () => {
         }
     ];
 
+    useEffect(() => {
+        const handleToggle = () => setIsSidebarOpen(prev => !prev);
+        window.addEventListener('toggle-sidebar', (handleToggle as EventListener));
+        return () => window.removeEventListener('toggle-sidebar', (handleToggle as EventListener));
+    }, []);
+
     return (
         <div className="h-[calc(100vh-68px)] p-0 md:p-4 lg:p-6 bg-gray-50">
-            <ChatLayout sidebar={
-                <PlanSidebar
-                    isOpen={isSidebarOpen}
-                    onClose={() => setIsSidebarOpen(false)}
-                    selectedCrop={selectedCrop}
-                    setSelectedCrop={setSelectedCrop}
-                />
-            }>
+            <PlanSidebar
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
+                selectedCrop={selectedCrop}
+                setSelectedCrop={setSelectedCrop}
+            />
+            <ChatLayout>
                 <div className="flex flex-col h-full w-full">
-                    {/* Mobile Header */}
-                    <div className="md:hidden flex items-center p-4 border-b border-[#E0E6E6] bg-white/80 backdrop-blur-md sticky top-0 z-20">
-                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 mr-2">
-                            <Menu className="w-6 h-6 text-[#002105]" />
-                        </button>
-                        <h1 className="text-lg font-bold text-[#002105]">{(t as any).planTitle || 'Planner'}</h1>
-                    </div>
-
                     <div className="flex-1 overflow-y-auto w-full p-4 md:p-8">
                         <div className="max-w-[1200px] mx-auto w-full">
+
                             {/* 1) LOADING STATE */}
                             {loading && (
                                 <div className="flex flex-col items-center justify-center min-h-[60vh] animate-in fade-in duration-500">

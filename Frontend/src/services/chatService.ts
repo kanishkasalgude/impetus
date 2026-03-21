@@ -46,15 +46,18 @@ export const chatService = {
     createChat: async (userId: string, initialTitle: string = "New Chat", backendSessionId?: string, type: 'advisor' | 'waste' = 'advisor'): Promise<string> => {
         try {
             const chatRef = collection(db, USERS_COLLECTION, userId, CHATS_COLLECTION);
-            const newChat = await addDoc(chatRef, {
+            const chatData: any = {
                 userId,
                 title: initialTitle,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
                 model: type === 'waste' ? 'waste-to-value-v1' : 'krishi-advisor-v1',
-                backendSessionId,
                 type
-            });
+            };
+            if (backendSessionId) {
+                chatData.backendSessionId = backendSessionId;
+            }
+            const newChat = await addDoc(chatRef, chatData);
             return newChat.id;
         } catch (error) {
 
