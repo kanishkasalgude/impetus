@@ -63,6 +63,20 @@ const Header: React.FC<{
   const { language, setLanguage, t } = useLanguage();
   const { activeFarm, setActiveFarm, farms } = useFarm();
   const { theme, toggleTheme } = useTheme();
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    if (profileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [profileOpen]);
 
   const navItems = [
     { label: t.navHome, path: '/' },
@@ -90,15 +104,27 @@ const Header: React.FC<{
     <header className="fixed top-0 z-[60] w-full bg-[#1B5E20] border-b border-[#2E7D32] shadow-md transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-[64px]">
-          {/* Left: Hamburger Menu */}
+          {/* Left: Navigation Icon (Back or Hamburger) */}
           <div className="flex items-center gap-1 md:gap-3">
-            {/* Always available Hamburger for mobile sidebar toggling */}
-            <button 
-              onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
-              className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors md:hidden"
-            >
-              <Menu size={24} />
-            </button>
+            {location.pathname !== '/' && (
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+                title={t.back || "Back"}
+              >
+                <ArrowLeft size={24} />
+              </button>
+            )}
+            
+            {(location.pathname === '/' || location.pathname === '/chat') && (
+              <button 
+                onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
+                className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors md:hidden"
+                title="Menu"
+              >
+                <Menu size={24} />
+              </button>
+            )}
           </div>
 
           {/* Center: Feature Navigation (bigger icons + labels) - Shown on feature pages */}
@@ -161,8 +187,11 @@ const Header: React.FC<{
               </div>
             )}
             {user ? (
-              <div className="relative group">
-                <button className="flex items-center gap-2 md:gap-3 bg-white/5 border border-white/20 px-3 py-2 md:px-4 md:py-2 hover:bg-white/10 transition-colors rounded-xl">
+              <div className="relative" ref={profileRef}>
+                <button
+                  onClick={() => setProfileOpen(prev => !prev)}
+                  className="flex items-center gap-2 md:gap-3 bg-white/5 border border-white/20 px-3 py-2 md:px-4 md:py-2 hover:bg-white/10 transition-colors rounded-xl"
+                >
                   <div className="w-8 h-8 bg-white flex items-center justify-center text-[#1B5E20] font-bold text-sm rounded-full">
                     {user.name && user.name.charAt(0).toUpperCase()}
                   </div>
@@ -171,7 +200,7 @@ const Header: React.FC<{
                   </div>
                 </button>
 
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white border-2 border-[#1B5E20] shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 rounded-xl overflow-hidden">
+                <div className={`absolute right-0 top-full mt-2 w-64 bg-white border-2 border-[#1B5E20] shadow-xl transition-all z-50 rounded-xl overflow-hidden ${profileOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}>
                   {/* Farm Switcher */}
                   <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">{t.switchFarm}</p>
@@ -179,7 +208,7 @@ const Header: React.FC<{
                       {farms.map((f, i) => (
                         <button
                           key={i}
-                          onClick={() => setActiveFarm(f)}
+                          onClick={() => { setActiveFarm(f); setProfileOpen(false); }}
                           className={`w-full text-left px-3 py-2 rounded-lg text-sm font-bold transition-all ${activeFarm?.nickname === f.nickname ? 'bg-[#1B5E20] text-white' : 'text-gray-700 hover:bg-green-50'}`}
                         >
                           {f.nickname || `${t.step} ${i + 1}`}
@@ -187,6 +216,7 @@ const Header: React.FC<{
                       ))}
                       <Link
                         to="/profile/edit"
+                        onClick={() => setProfileOpen(false)}
                         className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-lg text-sm font-bold text-[#1B5E20] hover:bg-green-50 mt-1 dashed-border border-2 border-dashed border-green-100"
                       >
                         <Plus size={14} /> {t.addNewFarm}
@@ -199,27 +229,27 @@ const Header: React.FC<{
                         <NotificationBell />
                       </div>
                   )}
-                  <Link to="/" className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                  <Link to="/" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
                     <Layout size={16} /> {t.navHome || "Home"}
                   </Link>
                   {isFeaturePage && (
                     <>
-                      <Link to="/news" className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                      <Link to="/news" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
                         <Newspaper size={16} /> {t.navNews || "News"}
                       </Link>
-                      <button onClick={toggleWeather} className="flex items-center gap-3 w-full px-5 py-4 text-left text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                      <button onClick={() => { toggleWeather(); setProfileOpen(false); }} className="flex items-center gap-3 w-full px-5 py-4 text-left text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
                         <Cloud size={16} /> {(t as any).navWeather || "Weather"}
                       </button>
                     </>
                   )}
-                  <Link to="/hub" className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                  <Link to="/hub" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
                     <BookOpen size={16} /> {t.navHub || "Knowledge Hub"}
                   </Link>
-                  <Link to="/profile/edit" className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                  <Link to="/profile/edit" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
                     <Settings size={16} /> {t.editProfile}
                   </Link>
                   <button
-                    onClick={logout}
+                    onClick={() => { logout(); setProfileOpen(false); }}
                     className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
                   >
                     <LogOut size={16} /> {t.logout}
@@ -992,8 +1022,7 @@ const AppContent: React.FC = () => {
       ) : !user ? (
         authView === 'login' ? <LoginFlow onLogin={handleLogin} onSwitch={() => setAuthView('signup')} /> : <SignupFlow onSignup={handleSignup} onSwitch={() => setAuthView('login')} />
       ) : (
-
-        <div className="min-h-screen pt-[68px]">
+        <div className="min-h-[100dvh] pt-[68px]">
           {/* Updated Header with refresh and loading props */}
           <Header
             toggleNotifications={() => { }}
@@ -1014,17 +1043,7 @@ const AppContent: React.FC = () => {
             location={getBestLocation(activeFarm)}
           />
 
-          {location.pathname !== '/' && location.pathname !== '/chat' && (
-            <div className="max-w-7xl mx-auto px-4 pt-4 pb-2">
-              <button 
-                onClick={() => navigate(-1)}
-                className="flex items-center gap-2 text-[#1B5E20] font-bold text-xl hover:text-green-800 transition-colors"
-              >
-                <ArrowLeft size={28} />
-                <span>{t.back || 'Back'}</span>
-              </button>
-            </div>
-          )}
+
 
           <Routes>
             <Route path="/" element={<Chatbot />} />
@@ -1045,8 +1064,8 @@ const AppContent: React.FC = () => {
             <Route path="/profile/edit" element={<EditProfile />} />
           </Routes>
 
-          {/* Floating Chatbot Button — hidden on home and chatbot pages */}
-          {location.pathname !== '/' && location.pathname !== '/plan' && location.pathname !== '/chat' && (
+          {/* Floating Chatbot Button — hidden on home, chatbot, and waste-to-value pages */}
+          {location.pathname !== '/' && location.pathname !== '/plan' && location.pathname !== '/chat' && location.pathname !== '/waste-to-value' && (
             <Link
               to="/chat"
               state={{ newChatWithGreeting: true }}

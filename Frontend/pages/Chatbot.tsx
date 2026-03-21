@@ -641,7 +641,7 @@ const Chatbot: React.FC = () => {
     );
 
     return (
-        <div className="h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] max-w-7xl mx-auto md:p-6 p-0">
+        <div className="h-[calc(100dvh-80px)] md:h-[calc(100dvh-100px)] max-w-7xl mx-auto md:p-6 p-0">
             {Sidebar}
             <ChatLayout>
                 {/* Messages Container */}
@@ -655,9 +655,6 @@ const Chatbot: React.FC = () => {
                     {/* Welcome / Empty State */}
                     {messages.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center h-full text-center py-12 gap-6">
-                            <div className="w-16 h-16 bg-[#1B5E20]/10 rounded-full flex items-center justify-center">
-                                <User className="w-8 h-8 text-[#1B5E20]" />
-                            </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-[#1B5E20]">{t.chatbot?.welcomeTitle || "Welcome to KrishiSahAI"}</h2>
                                 <p className="text-stone-500 mt-1 text-sm">{t.chatbot?.welcomeSub || "Ask me anything about farming, crops, weather, or government schemes."}</p>

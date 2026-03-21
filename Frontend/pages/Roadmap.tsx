@@ -116,8 +116,8 @@ const Roadmap: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
                 <Loader2 className="w-16 h-16 text-[#1B5E20] animate-spin mb-4" />
-                <h2 className="text-2xl font-bold text-[#1E1E1E]">{t.generatingRoadmap}</h2>
-                <p className="text-[#555555] mt-2">{t.analyzingRoadmap}</p>
+                <h2 className="text-2xl font-bold text-[#1E1E1E] text-center">{t.generatingRoadmap}</h2>
+                <p className="text-[#555555] mt-2 text-center">{t.analyzingRoadmap}</p>
             </div>
         );
     }

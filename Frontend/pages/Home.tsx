@@ -152,7 +152,7 @@ const Home: React.FC = () => {
     }, []);
 
     return (
-        <div className="h-[calc(100vh-68px)] p-0 md:p-4 lg:p-6 bg-gray-50">
+        <div className="h-[calc(100dvh-68px)] p-0 md:p-4 lg:p-6 bg-gray-50">
             <PlanSidebar
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
@@ -200,10 +200,27 @@ const Home: React.FC = () => {
                             {/* 3) MAIN CONTENT STATE */}
                             {!loading && !error && roadmap && (
                                 <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                    
+                                    {/* Overview Section */}
+                                    {roadmap.title && (
+                                        <div className="mb-8 p-6 md:p-8 bg-gradient-to-br from-green-50 to-white rounded-[32px] border border-green-100 shadow-sm">
+                                            <h2 className="text-2xl md:text-4xl font-black text-[#1B5E20] tracking-tight mb-4 flex items-center gap-3">
+                                                <Target className="w-8 h-8 md:w-10 md:h-10 text-[#2E7D32]" />
+                                                {roadmap.title}
+                                            </h2>
+                                            {roadmap.overview && (
+                                                <p className="text-gray-700 font-medium text-lg leading-relaxed">
+                                                    {roadmap.overview}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Phases Timeline */}
+                                    {Array.isArray(roadmap.years) && roadmap.years.length > 0 ? (
                                     <div className="space-y-6">
-                                        {roadmap.years?.map((year, idx) => {
+                                        {roadmap.years.map((year, idx) => {
+                                            if (!year) return null;
                                             const btnConfig = phaseButtons[Math.min(idx, phaseButtons.length - 1)];
 
                                             return (
@@ -228,7 +245,7 @@ const Home: React.FC = () => {
                                                                 <div>
                                                                     <h4 className="text-xs font-black text-[#1B5E20] uppercase tracking-widest mb-3 opacity-80">{t.home?.requiredActions || 'Required Actions'}</h4>
                                                                     <ul className="grid grid-cols-1 gap-3">
-                                                                        {year.actions?.filter(action => action.replace(/[^a-zA-Z0-9]/g, '').trim() !== '').map((action, aIdx) => (
+                                                                        {Array.isArray(year.actions) && year.actions.filter(action => typeof action === 'string' && action.replace(/[^a-zA-Z0-9]/g, '').trim() !== '').map((action, aIdx) => (
                                                                             <li key={aIdx} className="flex items-start gap-3 bg-gray-50/50 p-3 rounded-xl border border-gray-100">
                                                                                 <CheckCircle className="w-5 h-5 text-[#2E7D32] flex-shrink-0 mt-0.5" />
                                                                                 <div className="text-sm md:text-base font-semibold text-[#555] leading-relaxed flex-1">
@@ -256,7 +273,7 @@ const Home: React.FC = () => {
                                                                 <button
                                                                     onClick={() => {
                                                                         if (btnConfig.label === 'Ask Chatbot') {
-                                                                            const validActions = year.actions?.filter(a => a.trim() !== '') || [];
+                                                                            const validActions = Array.isArray(year.actions) ? year.actions.filter(a => typeof a === 'string' && a.trim() !== '') : [];
                                                                             const prompt = `I need help with Phase ${idx + 1}: ${year.year} - ${year.goal}. \nCritical Focus: ${year.focus} \nRequired Actions:\n${validActions.map(a => '- ' + a).join('\n')}\nCould you provide more specific advice, tips, and guidance for this phase?`;
                                                                             navigate(btnConfig.path, {
                                                                                 state: {
@@ -287,6 +304,17 @@ const Home: React.FC = () => {
                                             );
                                         })}
                                     </div>
+                                    ) : (
+                                        <div className="bg-white rounded-3xl p-10 text-center shadow-lg border border-gray-100 mt-6">
+                                            <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <Target className="w-8 h-8 text-amber-500" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-[#1E1E1E]">Specific Phases Not Available</h3>
+                                            <p className="text-[#555] mt-2 max-w-lg mx-auto">
+                                                We've generated the core overview for your crop, but detailed phase-by-phase actions couldn't be loaded at this moment. Please use the AI Chatbot for more targeted questions!
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

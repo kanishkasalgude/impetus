@@ -117,13 +117,13 @@ const WasteToValue: React.FC = () => {
 
     const formatMessage = (text: string) => {
         if (!text) return '';
-        // Replace '•' (and any following whitespace/newlines) with newline + markdown list item
-        let formatted = text.replace(/•(?:[\r\n]|\s)*/g, '\n\n* ');
-
-        // Ensure spacing around headers (if any)
-        formatted = formatted.replace(/([.!?])\s*([A-Za-z\s]+:)/g, '$1\n\n$2');
-
-        return formatted;
+        // Replace bullet characters with proper markdown list items
+        let formatted = text.replace(/•\s*/g, '\n- ');
+        // Ensure double newline before headers so markdown renders them correctly
+        formatted = formatted.replace(/(\*\*[^*]+\*\*:?)/g, '\n\n$1');
+        // Clean up excessive blank lines (3+ newlines -> 2)
+        formatted = formatted.replace(/\n{3,}/g, '\n\n');
+        return formatted.trim();
     };
 
     const handleAnalyze = async (e: React.FormEvent) => {
@@ -418,68 +418,89 @@ const WasteToValue: React.FC = () => {
     // --- RENDER VIEW: CHAT ---
     if (view === 'chat') {
         return (
-            <div className="max-w-7xl mx-auto py-2 px-4 h-[calc(100vh-100px)] flex flex-col">
+            <div className="max-w-3xl mx-auto py-2 px-4 h-[calc(100vh-100px)] flex flex-col">
                 <button
                     onClick={() => setView('results')}
-                    className="mb-4 text-[#555555] hover:text-[#1B5E20] flex items-center gap-2 font-bold text-lg transition-colors w-fit"
+                    className="mb-3 text-[#555555] hover:text-[#1B5E20] flex items-center gap-2 font-bold text-sm transition-colors w-fit"
                 >
-                    <ArrowLeft className="w-5 h-5" /> {t.back}
+                    <ArrowLeft className="w-4 h-4" /> {t.back}
                 </button>
 
-                <div className="bg-white rounded-[2.5rem] shadow-2xl border border-[#E6E6E6] overflow-hidden flex flex-col flex-grow">
+                <div className="bg-white rounded-2xl shadow-xl border border-[#E6E6E6] overflow-hidden flex flex-col flex-grow">
                     {/* Chat Header */}
-                    <div className="bg-white/90 backdrop-blur-md p-6 border-b border-[#E6E6E6] flex items-center gap-4 sticky top-0 z-10">
-                        <div className="w-12 h-12 bg-[#E8F5E9] rounded-full flex items-center justify-center border border-[#E6E6E6]">
-                            <MessageCircle className="w-6 h-6 text-[#1B5E20]" />
+                    <div className="bg-white p-4 border-b border-[#E6E6E6] flex items-center gap-3 sticky top-0 z-10">
+                        <div className="w-10 h-10 bg-[#E8F5E9] rounded-full flex items-center justify-center border border-[#E6E6E6]">
+                            <MessageCircle className="w-5 h-5 text-[#1B5E20]" />
                         </div>
                         <div>
-                            <h3 className="font-bold text-xl text-[#1E1E1E]">{t.knowledgeAssistant}</h3>
-                            <p className="text-sm text-[#555555] font-medium">{t.chatPlaceholder}</p>
+                            <h3 className="font-bold text-base text-[#1E1E1E]">{t.knowledgeAssistant}</h3>
+                            <p className="text-xs text-[#555555]">{t.chatPlaceholder}</p>
                         </div>
                     </div>
 
                     {/* Chat Messages */}
-                    <div className="flex-grow p-6 overflow-y-auto space-y-6 bg-[#E8F5E9] scroll-smooth">
+                    <div className="flex-grow p-4 overflow-y-auto space-y-4 bg-[#F5FAF5] scroll-smooth">
+                        {messages.length === 0 && (
+                            <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 py-10">
+                                <MessageCircle className="w-10 h-10 mb-3 opacity-30" />
+                                <p className="text-sm font-medium">Ask anything about your waste analysis</p>
+                            </div>
+                        )}
                         {messages.map((msg, index) => (
-                            <div key={index} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`flex max-w-[85%] md:max-w-[75%] gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm border ${msg.role === 'user' ? 'bg-[#1B5E20] border-[#1B5E20]' : 'bg-white border-[#E6E6E6]'
-                                        }`}>
-                                        {msg.role === 'user' ? <User className="w-5 h-5 text-white" /> : <Bot className="w-6 h-6 text-[#1B5E20]" />}
+                            <div key={index} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                {/* Bot Avatar (left side) */}
+                                {msg.role !== 'user' && (
+                                    <div className="w-8 h-8 rounded-full bg-white border border-[#E6E6E6] flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <Bot className="w-4 h-4 text-[#1B5E20]" />
                                     </div>
-                                    <div className={`p-5 rounded-2xl shadow-sm leading-relaxed text-[15px] ${msg.role === 'user'
-                                        ? 'bg-[#1B5E20] text-white rounded-tr-none'
-                                        : 'bg-white text-[#1E1E1E] rounded-tl-none border border-[#E6E6E6]'
-                                        }`}>
+                                )}
+
+                                {/* Message bubble */}
+                                <div
+                                    className={`max-w-[75%] rounded-2xl px-4 py-3 text-[14px] leading-relaxed shadow-sm ${
+                                        msg.role === 'user'
+                                            ? 'bg-[#1B5E20] text-white rounded-br-sm'
+                                            : 'bg-white text-[#1E1E1E] rounded-bl-sm border border-[#E6E6E6]'
+                                    }`}
+                                >
+                                    {msg.role === 'user' ? (
+                                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                                    ) : (
                                         <ReactMarkdown
                                             components={{
                                                 p: ({ node, ...props }) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
-                                                ul: ({ node, ...props }) => <ul className="list-disc list-outside mb-2 ml-5 space-y-1" {...props} />,
-                                                ol: ({ node, ...props }) => <ol className="list-decimal list-outside mb-2 ml-5 space-y-1" {...props} />,
-                                                li: ({ node, ...props }) => <li className="mb-1 pl-1" {...props} />,
-                                                strong: ({ node, ...props }) => <span className="font-bold text-[#1B5E20]" {...props} />,
-                                                h1: ({ node, ...props }) => <h1 className="text-xl font-bold mb-2 text-[#1B5E20] mt-4 first:mt-0" {...props} />,
-                                                h2: ({ node, ...props }) => <h2 className="text-lg font-bold mb-2 text-[#1B5E20] mt-3 first:mt-0" {...props} />,
-                                                h3: ({ node, ...props }) => <h3 className="text-md font-bold mb-2 text-[#1B5E20] mt-2 first:mt-0" {...props} />,
+                                                ul: ({ node, ...props }) => <ul className="list-disc list-outside mb-2 ml-4 space-y-1" {...props} />,
+                                                ol: ({ node, ...props }) => <ol className="list-decimal list-outside mb-2 ml-4 space-y-1" {...props} />,
+                                                li: ({ node, ...props }) => <li className="leading-snug" {...props} />,
+                                                strong: ({ node, ...props }) => <strong className="font-bold text-[#1B5E20]" {...props} />,
+                                                h1: ({ node, ...props }) => <h1 className="text-base font-bold mb-1 text-[#1B5E20] mt-3 first:mt-0 border-b border-green-100 pb-1" {...props} />,
+                                                h2: ({ node, ...props }) => <h2 className="text-sm font-bold mb-1 text-[#1B5E20] mt-2 first:mt-0" {...props} />,
+                                                h3: ({ node, ...props }) => <h3 className="text-sm font-semibold mb-1 text-[#1B5E20] mt-2 first:mt-0" {...props} />,
+                                                hr: () => <hr className="my-2 border-gray-100" />,
                                             }}
                                         >
                                             {formatMessage(msg.text)}
                                         </ReactMarkdown>
-                                    </div>
+                                    )}
                                 </div>
+
+                                {/* User Avatar (right side) */}
+                                {msg.role === 'user' && (
+                                    <div className="w-8 h-8 rounded-full bg-[#1B5E20] flex items-center justify-center flex-shrink-0 shadow-sm">
+                                        <User className="w-4 h-4 text-white" />
+                                    </div>
+                                )}
                             </div>
                         ))}
                         {isChatLoading && (
-                            <div className="flex justify-start w-full">
-                                <div className="flex max-w-[85%] gap-3">
-                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-[#E6E6E6]">
-                                        <Loader2 className="w-5 h-5 text-[#1B5E20] animate-spin" />
-                                    </div>
-                                    <div className="bg-white p-4 rounded-2xl rounded-tl-none border border-[#E6E6E6] shadow-sm flex items-center gap-1">
-                                        <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce"></span>
-                                        <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce delay-100"></span>
-                                        <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce delay-200"></span>
-                                    </div>
+                            <div className="flex items-end gap-2 justify-start">
+                                <div className="w-8 h-8 rounded-full bg-white border border-[#E6E6E6] flex items-center justify-center flex-shrink-0 shadow-sm">
+                                    <Bot className="w-4 h-4 text-[#1B5E20]" />
+                                </div>
+                                <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm border border-[#E6E6E6] shadow-sm flex items-center gap-1.5">
+                                    <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce" style={{animationDelay:'0ms'}}></span>
+                                    <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce" style={{animationDelay:'150ms'}}></span>
+                                    <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce" style={{animationDelay:'300ms'}}></span>
                                 </div>
                             </div>
                         )}
@@ -487,23 +508,23 @@ const WasteToValue: React.FC = () => {
                     </div>
 
                     {/* Input Area */}
-                    <div className="p-4 bg-white border-t border-[#E6E6E6]">
-                        <div className="flex gap-2">
+                    <div className="p-3 bg-white border-t border-[#E6E6E6]">
+                        <div className="flex gap-2 items-center">
                             <input
                                 type="text"
                                 value={chatInput}
                                 onChange={(e) => setChatInput(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                                 placeholder={t.chatPlaceholder}
-                                className="flex-grow p-4 bg-[#E8F5E9] rounded-xl border border-[#E6E6E6] focus:border-[#1B5E20] focus:ring-1 focus:ring-[#1B5E20] outline-none transition-all"
+                                className="flex-grow p-3 bg-[#F5FAF5] rounded-xl border border-[#E6E6E6] focus:border-[#1B5E20] focus:ring-1 focus:ring-[#1B5E20] outline-none transition-all text-sm"
                                 disabled={isChatLoading}
                             />
                             <button
                                 onClick={() => handleSendMessage()}
                                 disabled={!chatInput.trim() || isChatLoading}
-                                className="p-4 bg-[#1B5E20] text-white rounded-xl hover:bg-[#000D0F] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:transform hover:-translate-y-1"
+                                className="p-3 bg-[#1B5E20] text-white rounded-xl hover:bg-[#145214] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md flex items-center justify-center flex-shrink-0"
                             >
-                                <Send className="w-5 h-5" />
+                                <Send className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
@@ -518,26 +539,30 @@ const WasteToValue: React.FC = () => {
     return (
         <div className="max-w-7xl mx-auto space-y-8 pt-8 pb-16 px-4">
             {/* Header */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setIsHistoryOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-[#1B5E20] text-[#1B5E20] rounded-xl font-bold hover:bg-[#1B5E20] hover:text-white transition-all shadow-sm"
+                    <button 
+                        onClick={() => setView('input')} 
+                        className="text-[#555555] hover:text-[#1B5E20] transition-colors p-2 -ml-2 rounded-full hover:bg-[#E8F5E9]"
+                        title={t.back || "Back"}
                     >
-                        <History className="w-5 h-5" />
-                        {t.history || "History"}
+                        <ArrowLeft className="w-7 h-7" />
                     </button>
-                    <button onClick={() => setView('input')} className="text-[#555555] hover:text-[#1B5E20] transition-colors p-2 rounded-full hover:bg-[#E8F5E9]">
-                        <ArrowLeft className="w-6 h-6" />
-                    </button>
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-extrabold text-[#1E1E1E] flex items-center gap-2">
+                            <Recycle className="w-7 h-7 md:w-8 md:h-8 text-[#1B5E20]" /> {t.wasteValue}
+                        </h1>
+                        <p className="text-[#555555] mt-1 text-sm md:text-base">{t.resultsFor}: <strong className="text-[#1B5E20]">{resultData.crop}</strong></p>
+                    </div>
                 </div>
 
-                <div>
-                    <h1 className="text-3xl font-extrabold text-[#1E1E1E] flex items-center gap-2">
-                        <Recycle className="w-8 h-8 text-[#1B5E20]" /> {t.wasteValue}
-                    </h1>
-                    <p className="text-[#555555]">{t.resultsFor}: <strong>{resultData.crop}</strong></p>
-                </div>
+                <button
+                    onClick={() => setIsHistoryOpen(true)}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-[#1B5E20] text-[#1B5E20] rounded-xl font-bold hover:bg-[#1B5E20] hover:text-white transition-all shadow-sm w-fit active:scale-95"
+                >
+                    <History className="w-5 h-5" />
+                    {t.history || "History"}
+                </button>
             </div>
 
             {/* SECTION A: Suggestion Cards */}

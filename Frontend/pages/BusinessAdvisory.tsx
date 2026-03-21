@@ -190,7 +190,7 @@ const BusinessAdvisory: React.FC = () => {
             {
                 title: t.advisory.knowMore.keyRequirements,
                 content: [
-                    ...(rec.requirements.length > 0 ? rec.requirements : ["Land", "Water access", "Basic equipment", "Skilled labour"]),
+                    ...(Array.isArray(rec.requirements) && rec.requirements.length > 0 ? rec.requirements : ["Land", "Water access", "Basic equipment", "Skilled labour"]),
                     `Minimum working capital buffer of 20% of ${rec.estimated_cost} recommended for first 2 months.`,
                     "Basic record-keeping or a mobile app like eNAM or AgriBazaar is helpful for price discovery and sales tracking.",
                     "FSSAI registration may be required if processing or packaging farm produce for direct consumer sale."
@@ -199,7 +199,7 @@ const BusinessAdvisory: React.FC = () => {
             {
                 title: t.advisory.knowMore.riskAndMitigation,
                 content: [
-                    ...(rec.risk_factors && rec.risk_factors.length > 0 ? rec.risk_factors : [
+                    ...(Array.isArray(rec.risk_factors) && rec.risk_factors.length > 0 ? rec.risk_factors : [
                         "Market price volatility during harvest season — mitigate via forward contracts or FPO tie-ups.",
                         "Pest or disease outbreaks — adopt IPM (Integrated Pest Management) and maintain crop insurance.",
                         "Weather dependency (drought/flood) — consider drip irrigation and PM Fasal Bima Yojana coverage."
@@ -221,7 +221,7 @@ const BusinessAdvisory: React.FC = () => {
             {
                 title: t.advisory.knowMore.stepsToStart,
                 content: [
-                    ...(rec.implementation_steps && rec.implementation_steps.length > 0 ? rec.implementation_steps : [
+                    ...(Array.isArray(rec.implementation_steps) && rec.implementation_steps.length > 0 ? rec.implementation_steps : [
                         "Step 1 — Conduct a local market survey: identify 3–5 potential buyers (mandis, retailers, hotels).",
                         "Step 2 — Prepare land or infrastructure: clear, level, and set up basic facilities.",
                         "Step 3 — Register with APMC or nearest FPO to access subsidies and fair pricing.",
@@ -530,7 +530,7 @@ const BusinessAdvisory: React.FC = () => {
         };
 
         return (
-            <div className="p-4 md:p-8 max-w-4xl mx-auto min-h-screen">
+            <div className="p-4 md:p-8 max-w-4xl mx-auto">
                 {/* Navigation Header */}
                 <div className="mb-8 flex items-center justify-end">
                     <div className="flex items-center gap-4">
@@ -1025,9 +1025,9 @@ const BusinessAdvisory: React.FC = () => {
                                                 previousState: { formData, recommendations, step }
                                             }
                                         })}
-                                        className="w-full py-4 bg-[#1B5E20] text-white rounded-xl font-bold text-lg hover:bg-[#000D0F] transition-all shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]"
+                                        className="w-full py-5 bg-[#1B5E20] text-white rounded-xl font-bold text-xl hover:bg-[#000D0F] transition-all shadow-lg flex items-center justify-center gap-2 transform hover:scale-[1.02]"
                                     >
-                                        <TrendingUp className="w-5 h-5" /> {t.advisory.steps.simulateBtn}
+                                        <TrendingUp className="w-6 h-6" /> {t.advisory.steps.simulateBtn}
                                     </button>
 
                                     <div className="flex gap-3">
@@ -1284,19 +1284,25 @@ const BusinessAdvisory: React.FC = () => {
     };
 
     return (
-        <div className="h-[calc(100vh-68px)] p-0 md:p-4 lg:p-6 bg-gray-50">
+        <div className={step === 2 ? "h-[calc(100vh-68px)] p-0 md:p-4 lg:p-6 bg-gray-50" : "min-h-screen bg-gray-50 p-0 md:p-4 lg:p-6"}>
             <AdvisorySidebar
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
                 recentAdvisories={recommendations}
             />
-            <ChatLayout>
-                <div className="flex flex-col h-full w-full">
-                    <div className="flex-1 overflow-y-auto w-full">
-                        {renderContent()}
+            {step === 2 ? (
+                <ChatLayout>
+                    <div className="flex flex-col h-full w-full">
+                        <div className="flex-1 overflow-y-auto w-full">
+                            {renderContent()}
+                        </div>
                     </div>
+                </ChatLayout>
+            ) : (
+                <div className="w-full">
+                    {renderContent()}
                 </div>
-            </ChatLayout>
+            )}
         </div>
     );
 };
