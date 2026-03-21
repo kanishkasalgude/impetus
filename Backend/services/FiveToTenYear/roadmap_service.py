@@ -120,7 +120,7 @@ class SustainabilityRoadmapGenerator:
                 "actions": "Key Actions",
                 "profit": "Expected Profit",
                 "year_term": "Year",
-                "headers": ["Overview", "1. 10-Year Growth & Profit Planner", "2. Labor & Aging Analysis", "3. Sustainability & Succession", "4. Financial Resilience", "5. Final Verdict"]
+                "headers": ["Overview", "1. 10-Year Business Roadmap", "2. Labor & Aging Analysis", "3. Sustainability & Succession", "4. Financial Resilience", "5. Final Verdict"]
             },
             "HI": {
                 "milestone": "रणनीतिक उपलब्धि का नाम",
@@ -165,7 +165,37 @@ Guidelines:
 4. Ensure the 10-year timeline shows clear progression (Scale-up, Diversification, Automation).
 5. All assumptions, costs, and market details MUST reflect the Indian agricultural economy.
 6. All financial values MUST be in Indian Rupees (₹). Do NOT use dollars ($).
-7. Output the response in {context['language_name']}.
+7. LANGUAGE CONSISTENCY (MANDATORY — Read Every Rule):
+
+   a) ABSOLUTE RULE: Generate the ENTIRE response ONLY in {context['language_name']}.
+
+   b) IF HINDI IS SELECTED:
+      - Use only pure Hindi in Devanagari script.
+      - Avoid English words completely, including in headings and section labels.
+      - Replace ALL technical terms with Hindi equivalents. If no direct translation exists, explain in simple Hindi.
+
+   c) IF MARATHI IS SELECTED:
+      - Use only pure Marathi in Devanagari script.
+      - Do NOT mix Hindi or English words.
+      - Use natural, regionally appropriate Marathi expressions.
+      - Translate or explain all technical concepts.
+
+   d) IF ENGLISH IS SELECTED:
+      - Use simple, clear English. Do NOT insert Hindi or Marathi words.
+
+   e) ERROR HANDLING: If any section cannot be expressed in {context['language_name']}, do NOT switch. Simplify in the same language.
+
+   f) INTERNAL VALIDATION: BEFORE producing the final response, verify:
+      - Are ALL words in {context['language_name']}?
+      - Any accidental English words in headings or body?
+      - If any violation is found, regenerate before outputting.
+
+   g) FAILURE CONDITIONS (NEVER do these):
+      - Any word from another language in the response.
+      - Mixed-language sentences or headings.
+      - Technical terms left in English when Hindi or Marathi is selected.
+
+8. NO EMOJIS: DO NOT use ANY emojis in your entire response.
 
 Structure (Use these exact Headers in {context['language_name']}):
 
@@ -229,9 +259,19 @@ DISCLAIMER: This roadmap is an AI-generated simulation based on provided data an
         """
         import re
         
-        title_prefix = "10-Year Sustainability & Profit"
+        # Multi-language header mapping for the parser
+        # We look for ANY of these patterns to demarcate sections
+        HEADERS = {
+            "overview": r'# (?:Overview|अवलोकन|आढावा|Business Overview|व्यवसाय अवलोकन|व्यावसायिक आढावा)',
+            "planner": r'# (?:1\. 10-Year Business Roadmap|1\. 10-Year Growth & Profit Planner|1\. 10-वर्षीय विकास और लाभ योजनाकार|1\. 10-वर्षांचे विकास आणि नफा नियोजक|1\. Roadmap Planner|1\. व्यवसाय योजनाकार|1\. व्यावसायिक नियोजक)',
+            "labor": r'# (?:2\. Labor & Aging Analysis|2\. श्रम और उम्र बढ़ने का विश्लेषण|2\. श्रम आणि वृद्धत्व विश्लेषण|2\. Resource & Labor Management|2\. संसाधन और श्रम प्रबंधन|2\. संसाधन आणि श्रम व्यवस्थापन)',
+            "sustainability": r'# (?:3\. Sustainability & Succession|3\. स्थिरता और उत्तराधिकार|3\. शाश्वतता आणि उत्तराधिकार|3\. Quality & Business Sustainability|3\. गुणवत्ता और व्यावसायिक स्थिरता|3\. गुणवत्ता आणि व्यावसायिक शाश्वतता)',
+            "resilience": r'# (?:4\. Financial Resilience|4\. वित्तीय लचीलापन|4\. आर्थिक लवचिकता|4\. Market & Risk Management|4\. बाजार और जोखिम प्रबंधन|4\. बाजार आणि जोखीम व्यवस्थापन)',
+            "verdict": r'# (?:5\. Final Verdict|5\. अंतिम निर्णय|5\. अंतिम निकाल)'
+        }
+        
         roadmap = {
-            "title": f"{title_prefix} Planner for {business_name}",
+            "title": f"10-Year Business Roadmap for {business_name}",
             "overview": "",
             "years": [],
             "labor_analysis": "",
@@ -239,17 +279,6 @@ DISCLAIMER: This roadmap is an AI-generated simulation based on provided data an
             "resilience_strategy": "",
             "verdict": "",
             "disclaimer": ""
-        }
-
-        # Multi-language header mapping for the parser
-        # We look for ANY of these patterns to demarcate sections
-        HEADERS = {
-            "overview": r'# (?:Overview|अवलोकन|आढावा|Crop Overview|फसल अवलोकन|पीक आढावा)',
-            "planner": r'# (?:1\. 10-Year Growth & Profit Planner|1\. 10-वर्षीय विकास और लाभ योजनाकार|1\. 10-वर्षांचे विकास आणि नफा नियोजक|1\. Crop Lifecycle Planner|1\. फसल जीवनचक्र योजनाकार|1\. पीक जीवनचक्र नियोजक)',
-            "labor": r'# (?:2\. Labor & Aging Analysis|2\. श्रम और उम्र बढ़ने का विश्लेषण|2\. श्रम आणि वृद्धत्व विश्लेषण|2\. Resource & Labor Management|2\. संसाधन और श्रम प्रबंधन|2\. संसाधन आणि श्रम व्यवस्थापन)',
-            "sustainability": r'# (?:3\. Sustainability & Succession|3\. स्थिरता और उत्तराधिकार|3\. शाश्वतता आणि उत्तराधिकार|3\. Quality & Harvest Sustainability|3\. गुणवत्ता और फसल स्थिरता|3\. गुणवत्ता आणि पीक शाश्वतता)',
-            "resilience": r'# (?:4\. Financial Resilience|4\. वित्तीय लचीलापन|4\. आर्थिक लवचिकता|4\. Market & Risk Management|4\. बाजार और जोखिम प्रबंधन|4\. बाजार आणि जोखीम व्यवस्थापन)',
-            "verdict": r'# (?:5\. Final Verdict|5\. अंतिम निर्णय|5\. अंतिम निकाल|5\. Final Harvest Verdict|5\. अंतिम फसल निर्णय|5\. अंतिम पीक निकाल)'
         }
 
         def extract_between(start_regex, end_regex=None):

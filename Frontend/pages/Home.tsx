@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../src/context/LanguageContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Recycle, Briefcase, Loader2, Target, Activity, ShieldCheck, TrendingUp, CheckCircle, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Recycle, Briefcase, Loader2, Target, Activity, ShieldCheck, TrendingUp, CheckCircle, AlertTriangle, MapPin, Sprout } from 'lucide-react';
 import { useFarm } from '../src/context/FarmContext';
 import { api } from '../src/services/api';
 import { getLocalizedValue, normalizeValue } from '../src/utils/localizationUtils';
@@ -77,10 +77,16 @@ const Home: React.FC = () => {
                 // 1. Check LocalStorage
                 const cachedPlan = localStorage.getItem(cacheKey);
                 if (cachedPlan) {
-                    setRoadmap(JSON.parse(cachedPlan));
-                    setLoading(false);
-                    setError('');
-                    return;
+                    const parsedPlan = JSON.parse(cachedPlan);
+                    if (parsedPlan.verdict !== 'Error' && !parsedPlan.overview?.startsWith('Error')) {
+                        setRoadmap(parsedPlan);
+                        setLoading(false);
+                        setError('');
+                        return;
+                    } else {
+                        // Remove invalid cache
+                        localStorage.removeItem(cacheKey);
+                    }
                 }
 
                 setLoading(true);
@@ -91,7 +97,7 @@ const Home: React.FC = () => {
                 const docRef = doc(db, 'users', uid, 'crop_plans', planId);
                 const docSnap = await getDoc(docRef);
 
-                if (docSnap.exists() && docSnap.data().roadmap && !docSnap.data().roadmap.overview?.startsWith('Error')) {
+                if (docSnap.exists() && docSnap.data().roadmap && docSnap.data().roadmap.verdict !== 'Error' && !docSnap.data().roadmap.overview?.startsWith('Error')) {
                     const firestoreRoadmap = docSnap.data().roadmap;
                     setRoadmap(firestoreRoadmap);
                     localStorage.setItem(cacheKey, JSON.stringify(firestoreRoadmap));
@@ -105,11 +111,11 @@ const Home: React.FC = () => {
                     setRoadmap(response.roadmap);
                     localStorage.setItem(cacheKey, JSON.stringify(response.roadmap));
                 } else {
-                    setError("Failed to generate crop planner.");
+                    setError("Failed to generate CropCycle.");
                 }
             } catch (err: any) {
                 console.error("Planner Error:", err);
-                setError(err.message || "An error occurred while generating the crop planner.");
+                setError(err.message || "An error occurred while generating CropCycle.");
             } finally {
                 setLoading(false);
             }
@@ -171,7 +177,7 @@ const Home: React.FC = () => {
                                         <div className="absolute inset-0 bg-green-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
                                         <Loader2 className="w-16 h-16 text-[#1B5E20] animate-spin relative z-10" />
                                     </div>
-                                    <h2 className="text-2xl font-black text-[#1E1E1E] mt-6 tracking-tight">{t.generatingRoadmap || 'Fetching Smart Crop Plan...'}</h2>
+                                    <h2 className="text-2xl font-black text-[#1E1E1E] mt-6 tracking-tight">{t.generatingRoadmap || 'Fetching CropCycle Roadmap...'}</h2>
                                     <p className="text-[#555555] mt-2 font-medium">{t.analyzingLifecycle || 'Analyzing lifecycle for'} {selectedCrop}...</p>
                                 </div>
                             )}
@@ -204,6 +210,17 @@ const Home: React.FC = () => {
                                     {/* Overview Section */}
                                     {roadmap.title && (
                                         <div className="mb-8 p-6 md:p-8 bg-gradient-to-br from-green-50 to-white rounded-[32px] border border-green-100 shadow-sm">
+                                            <div className="flex flex-wrap items-center gap-2 mb-4">
+                                                <span className="px-4 py-1.5 bg-[#E8F5E9] text-[#1B5E20] text-sm font-black uppercase tracking-widest rounded-full flex items-center gap-1.5 border border-green-200">
+                                                    <MapPin size={16} /> {activeFarm?.nickname || 'Your Farm'}
+                                                </span>
+                                                <button 
+                                                    onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))} 
+                                                    className="px-4 py-1.5 bg-white text-[#1B5E20] hover:text-[#2E7D32] text-sm font-black uppercase tracking-widest rounded-full flex items-center gap-1.5 border border-green-200 hover:bg-green-50 transition-colors shadow-sm active:scale-95"
+                                                >
+                                                    <Sprout size={16} /> {(t as any).changeCrop || 'Change Crop / Farm'}
+                                                </button>
+                                            </div>
                                             <h2 className="text-2xl md:text-4xl font-black text-[#1B5E20] tracking-tight mb-4 flex items-center gap-3">
                                                 <Target className="w-8 h-8 md:w-10 md:h-10 text-[#2E7D32]" />
                                                 {roadmap.title}

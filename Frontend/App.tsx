@@ -1022,7 +1022,7 @@ const AppContent: React.FC = () => {
       ) : !user ? (
         authView === 'login' ? <LoginFlow onLogin={handleLogin} onSwitch={() => setAuthView('signup')} /> : <SignupFlow onSignup={handleSignup} onSwitch={() => setAuthView('login')} />
       ) : (
-        <div className="min-h-[100dvh] pt-[68px]">
+        <div className={`min-h-[100dvh] pt-[68px] ${location.pathname === '/' || location.pathname === '/chat' ? 'bg-white' : ''}`}>
           {/* Updated Header with refresh and loading props */}
           <Header
             toggleNotifications={() => { }}

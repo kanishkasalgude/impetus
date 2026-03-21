@@ -98,7 +98,7 @@ const Roadmap: React.FC = () => {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `KrishiSahAI_Planner_${decodedName.replace(/\s+/g, '_')}.pdf`;
+            link.download = `KrishiSahAI_Roadmap_${decodedName.replace(/\s+/g, '_')}.pdf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -145,7 +145,12 @@ const Roadmap: React.FC = () => {
             <div className="max-w-5xl mx-auto">
                 {/* Header Actions */}
                 <div className="flex items-center justify-between mb-8 no-print">
-
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E6E6E6] text-[#1B5E20] font-bold rounded-xl hover:bg-[#F5F5F5] transition-all shadow-sm"
+                    >
+                        <ArrowLeft className="w-5 h-5" /> {t.back || "Back"}
+                    </button>
                 </div>
 
                 {/* Printable Content */}
@@ -215,7 +220,7 @@ const Roadmap: React.FC = () => {
                     </div>
                 </div>
 
-                {/* 10-Year Plan Section */}
+                {/* Strategic Timeline Section */}
                 <div className="mt-12 mb-12">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div className="flex items-center gap-3">
@@ -327,7 +332,7 @@ DISCLAIMER: This roadmap is an AI-generated simulation... [rest of disclaimer]
 Farmer Details:
 ${profileSummary}
 
-Format: Please use Markdown with headers and bold text for a professional "Planner" look. STRICTLY NO EMOJIS. Ensure the Disclaimer is clearly visible at the end.`;
+Format: Please use Markdown with headers and bold text for a professional "Roadmap" look. STRICTLY NO EMOJIS. Ensure the Disclaimer is clearly visible at the end.`;
 
                         navigate('/chat', {
                             state: {

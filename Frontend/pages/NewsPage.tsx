@@ -12,6 +12,18 @@ interface NewsArticle {
     url: string;
     published_at: string;
     image?: string;
+    action?: string;
+    category?: string;
+}
+
+interface NewsResponse {
+    success: boolean;
+    news: NewsArticle[];
+    weather_summary?: string;
+    weather_alerts?: string[];
+    advice?: string[];
+    next_actions?: string[];
+    error?: string;
 }
 
 type NewsMode = 'personalized' | 'general';
@@ -20,6 +32,7 @@ const NewsPage: React.FC = () => {
     const { t } = useLanguage();
     const navigate = useNavigate();
     const [news, setNews] = useState<NewsArticle[]>([]);
+    const [weatherSummary, setWeatherSummary] = useState<string | undefined>('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [newsMode, setNewsMode] = useState<NewsMode>('general');
@@ -48,6 +61,7 @@ const NewsPage: React.FC = () => {
 
             if (data.success) {
                 setNews(data.news);
+                setWeatherSummary(data.weather_summary);
             } else {
                 setError(data.error || 'Failed to load news');
             }
@@ -122,6 +136,18 @@ const NewsPage: React.FC = () => {
                 </button>
             </div>
 
+            {weatherSummary && (
+                <div className="mb-10 bg-gradient-to-r from-[#E8F5E9] to-[#C8E6C9] border-2 border-[#1B5E20] p-6 rounded-3xl shadow-sm">
+                    <h2 className="text-xl font-bold text-[#002105] mb-2 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 19.07 1.41 1.41"/><path d="M12 20v2"/><path d="m6.34 17.66-1.41 1.41"/><path d="M2 12h2"/><path d="m7.76 7.76-1.41 1.41"/><circle cx="12" cy="12" r="4"/></svg>
+                        Weather Intelligence
+                    </h2>
+                    <p className="text-[#1B5E20] font-medium leading-relaxed">
+                        {weatherSummary}
+                    </p>
+                </div>
+            )}
+
             {loading ? (
                 <div className="flex items-center justify-center h-64">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1B5E20]"></div>
@@ -148,19 +174,31 @@ const NewsPage: React.FC = () => {
                             )}
                             <div className="p-6 flex flex-col flex-grow">
                                 <div className="flex items-center justify-between mb-4">
-                                    <span className="text-xs font-bold uppercase tracking-widest text-[#1B5E20] bg-[#E8F5E9] px-3 py-1 rounded-full">
-                                        {item.source}
+                                    <span className={`text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full ${
+                                        item.category === 'RISK' ? 'bg-red-100 text-red-700' :
+                                        item.category === 'MARKET' ? 'bg-blue-100 text-blue-700' :
+                                        item.category === 'GOVERNMENT' ? 'bg-purple-100 text-purple-700' :
+                                        'bg-[#E8F5E9] text-[#1B5E20]'
+                                    }`}>
+                                        {item.category || item.source}
                                     </span>
                                     <span className="text-xs text-[#6B7878] font-medium">
-                                        {new Date(item.published_at).toLocaleDateString()}
+                                        {item.published_at ? new Date(item.published_at).toLocaleDateString() : 'Recent'}
                                     </span>
                                 </div>
                                 <h3 className="text-xl font-bold text-[#002105] mb-3 leading-tight group-hover:text-[#1B5E20] transition-colors">
                                     {item.headline}
                                 </h3>
-                                <p className="text-[#1B5E20] text-sm leading-relaxed mb-6 flex-grow">
+                                <p className="text-[#1B5E20] text-sm leading-relaxed mb-4">
                                     {item.summary}
                                 </p>
+                                
+                                {item.action && (
+                                    <div className="bg-[#FFF9C4] border-l-4 border-[#FBC02D] p-3 mb-6 rounded-r-lg">
+                                        <p className="text-xs font-bold text-[#5F4B00] uppercase mb-1">Recommended Action:</p>
+                                        <p className="text-sm text-[#002105] font-medium italic">"{item.action}"</p>
+                                    </div>
+                                )}
                                 <a
                                     href={item.url}
                                     target="_blank"

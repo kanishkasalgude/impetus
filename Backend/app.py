@@ -792,7 +792,7 @@ def generate_crop_roadmap():
             
         roadmap = crop_planner_generator.generate_crop_roadmap(user_id, crop_name, language)
         
-        if db and doc_ref and roadmap and not roadmap.get('overview', '').startswith('Error'):
+        if db and doc_ref and roadmap and roadmap.get('verdict') != 'Error' and not roadmap.get('overview', '').startswith('Error'):
             try:
                 doc_ref.set({'roadmap': roadmap, 'created_at': firestore.SERVER_TIMESTAMP})
                 print(f"[CROP-ROADMAP] Saved new plan for {crop_name} in {language}")
@@ -811,9 +811,11 @@ def generate_crop_roadmap():
 # --- Weather & News Services ---
 from services.WeatherNewsIntegration.weather_service import WeatherService
 from services.WeatherNewsIntegration.news_service import NewsService
+from services.WeatherNewsIntegration.src.agri_pro.agent import AgriAgent
 
 weather_service = WeatherService()
 news_service = NewsService()
+agri_agent = AgriAgent()
 
 @app.route('/api/news/<user_id>', methods=['GET', 'OPTIONS'])
 @require_auth
@@ -853,16 +855,34 @@ def get_personalized_news(user_id):
         except Exception as db_err:
             print(f"[NEWS] Firestore Error (Using defaults): {db_err}")
             
-        print(f"[NEWS] Personalized - Fetching for {user_id} (Crops: {crops}, Loc: {location})")
+        print(f"[NEWS] Personalized Intelligence - Fetching for {user_id} (Crops: {crops}, Loc: {location})")
         
+        # Construct farmer profile for AgriAgent
+        farmer_profile = user_data if user_doc.exists else {
+            "name": "Farmer",
+            "location": {"district": "Unknown", "state": "India"},
+            "crops": crops,
+            "soil_type": "Unknown",
+            "market_access": "Unknown",
+            "farming_stage": "Unknown"
+        }
+
         # Async call wrapper
         import asyncio
-        news = asyncio.run(news_service.get_personalized_news(crops, location))
+        advisory = asyncio.run(agri_agent.generate_advisory(farmer_profile))
         
-        if isinstance(news, dict) and 'error' in news:
-            return jsonify({'success': False, 'error': news['error']}), 500
+        if isinstance(advisory, dict) and 'error' in advisory:
+            return jsonify({'success': False, 'error': advisory['error']}), 500
         
-        return jsonify({'success': True, 'news': news})
+        # Return the relevant news from the advisory, plus the metadata
+        return jsonify({
+            'success': True, 
+            'news': advisory.get('relevant_agri_news', []),
+            'weather_summary': advisory.get('weather_summary'),
+            'weather_alerts': advisory.get('weather_alerts'),
+            'advice': advisory.get('personalized_advice', []),
+            'next_actions': advisory.get('next_actions_for_farmer', [])
+        })
     except Exception as e:
         print(f"[NEWS] Error: {e}")
         import traceback
@@ -876,16 +896,33 @@ def get_general_news():
     No authentication required as this is public news.
     """
     try:
-        print(f"[NEWS] General - Fetching broad agriculture news")
+        print(f"[NEWS] General Intelligence - Fetching broad agriculture news")
         
+        # For general news, we use a default profile or simplified agent logic
+        # For now, let's use the NewsService directly as it was, or adapt AgriAgent
+        # Since AgriAgent needs a profile, we'll give it a generic one for national level
+        generic_profile = {
+            "name": "Indian Farmer",
+            "location": {"district": "", "state": "India"},
+            "crops": ["Agriculture"], # Broad category
+            "soil_type": "Various",
+            "market_access": "Multiple",
+            "farming_stage": "Various"
+        }
+
         # Async call wrapper
         import asyncio
-        news = asyncio.run(news_service.get_general_news())
+        advisory = asyncio.run(agri_agent.generate_advisory(generic_profile, mode='general'))
         
-        if isinstance(news, dict) and 'error' in news:
-            return jsonify({'success': False, 'error': news['error']}), 500
+        if isinstance(advisory, dict) and 'error' in advisory:
+            return jsonify({'success': False, 'error': advisory['error']}), 500
         
-        return jsonify({'success': True, 'news': news})
+        return jsonify({
+            'success': True, 
+            'news': advisory.get('relevant_agri_news', []),
+            'weather_summary': advisory.get('weather_summary'),
+            'weather_alerts': advisory.get('weather_alerts')
+        })
     except Exception as e:
         print(f"[NEWS] General Error: {e}")
         import traceback

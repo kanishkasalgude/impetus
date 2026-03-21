@@ -377,7 +377,7 @@ def generate_roadmap_pdf(roadmap_data: Dict[str, Any], business_name: str) -> io
     # 1. Timeline (Years)
     years = roadmap_data.get('years', [])
     if years:
-        story.append(Paragraph("1. Strategic Timeline (10-Year Plan)", styles['h1']))
+        story.append(Paragraph("1. 10-Year Business Roadmap", styles['h1']))
         
         for year in years:
             # Year Header

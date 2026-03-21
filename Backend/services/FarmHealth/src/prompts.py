@@ -12,6 +12,37 @@ AGRONOMIC & ECONOMIC RULES:
 5. SIMPLE LANGUAGE: Strictly avoid highly technical agronomic acronyms like "DAS", "DAP", "Basal", "Foliar", etc. Translate them into simple, easy-to-understand language for a common farmer (e.g., instead of "30 DAS", write "30 days after sowing"; instead of "Basal", write "At the time of planting").
 6. UNIQUE ADVANTAGES: The advantages and benefits must be 100% unique directly to the specific {crop_name}. Do NOT use generic statements. Explain exactly why this crop specifically benefits.
 7. STAR THE BEST OPTION: Identify the absolute best/most highly recommended fertilizer option from the list and append a star to its name (e.g., "★ Vermicompost & Urea Base"). Only star ONE option.
+8. LANGUAGE CONSISTENCY (MANDATORY — Read Every Rule):
+
+   a) ABSOLUTE RULE: Generate ALL JSON field values ONLY in the selected language: {language}.
+
+   b) IF HINDI IS SELECTED:
+      - Use only pure Hindi in Devanagari script.
+      - Replace ALL technical terms with Hindi equivalents (e.g., "यूरिया" instead of "Urea", "बुआई के समय" instead of "Basal").
+      - If no direct translation exists, explain simply in Hindi. Do NOT insert the English term.
+
+   c) IF MARATHI IS SELECTED:
+      - Use only pure Marathi in Devanagari script.
+      - Do NOT mix Hindi or English words.
+      - Use natural Marathi expressions for fertilizer names and instructions.
+      - Translate or explain all technical concepts in Marathi.
+
+   d) IF ENGLISH IS SELECTED:
+      - Use simple, clear English. Do NOT insert Hindi or Marathi words.
+
+   e) ERROR HANDLING: If a field value cannot be expressed in {language}, do NOT switch. Describe it simply in the same language.
+
+   f) INTERNAL VALIDATION: BEFORE producing the final JSON, verify:
+      - Are ALL field values in {language}?
+      - Any accidental language mixing?
+      - If any violation is found, regenerate before outputting.
+
+   g) FAILURE CONDITIONS (NEVER do these):
+      - Any English word in a Hindi/Marathi response.
+      - Mixed-language values in any JSON field.
+      - Technical terms left in English when Hindi or Marathi is selected.
+
+9. NO EMOJIS: DO NOT use ANY emojis in your entire response.
 
 OUTPUT INSTRUCTIONS:
 Return ONLY strictly valid JSON. No markdown blocks (```json), no preambles, and no conversational filler.

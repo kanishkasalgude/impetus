@@ -8,7 +8,7 @@ interface ChatLayoutProps {
 
 export const ChatLayout: React.FC<ChatLayoutProps> = ({ sidebar, children }) => {
     return (
-        <div className="flex h-full w-full bg-white/40 backdrop-blur-xl md:rounded-[32px] md:border border-[#E6E6E6] shadow-xl overflow-hidden relative">
+        <div className="flex h-full w-full bg-white md:rounded-[32px] md:border border-[#E6E6E6] shadow-xl overflow-hidden relative">
             {/* Sidebar Wrapper - Only if sidebar exists */}
             {sidebar && (
                 <div className="absolute inset-y-0 left-0 z-20 md:relative md:w-[280px] lg:w-[320px] h-full">

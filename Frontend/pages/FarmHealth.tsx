@@ -253,9 +253,8 @@ const FarmHealth: React.FC = () => {
 
                                                                     <button
                                                                         onClick={() => openDeepDive(result, selectedCrop)}
-                                                                        className="w-full mt-2 group relative flex items-center justify-center gap-3 bg-gray-900 text-white px-5 py-3 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-emerald-900/20 active:scale-[0.98]">
-                                                                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-emerald-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                                                        <Sparkles className="w-4 h-4 relative z-10 text-emerald-400 group-hover:text-white transition-colors" />
+                                                                        className="w-full mt-2 group relative flex items-center justify-center gap-3 bg-[#1B5E20] text-white px-5 py-3 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-[#1B5E20]/30 active:scale-[0.98]">
+                                                                        <div className="absolute inset-0 bg-gradient-to-r from-[#1B5E20] to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                                                         <span className="relative z-10 text-sm font-black uppercase tracking-[0.2em]">Deep Dive Analysis</span>
                                                                     </button>
                                                                 </div>

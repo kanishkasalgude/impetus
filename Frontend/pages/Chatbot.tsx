@@ -96,10 +96,10 @@ const Chatbot: React.FC = () => {
     const [selectedFeature, setSelectedFeature] = useState<{ id: string; name: string; description: string; path?: string } | null>(null);
 
     const featureButtons = [
-        { id: 'disease-pest', name: 'Disease & Pest', description: 'Detect diseases and pests in your crops using AI.', path: '/crop-care', icon: <Sprout className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
-        { id: 'plan', name: 'Plan', description: 'Create and view 10-year roadmaps for your farm.', path: '/plan', icon: <Map className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
-        { id: 'advisory', name: 'Business Advisory', description: 'Get business recommendations based on your farm and market.', path: '/advisory', icon: <Briefcase className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
-        { id: 'waste', name: 'Waste to Value', description: 'Explore profitable ways to reuse, sell, or compost farm waste.', path: '/waste-to-value', icon: <Recycle className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> }
+        { id: 'disease-pest', name: t.featureCropCareTitle || 'Disease & Pest', description: t.featureCropCareSub || 'Detect diseases and pests in your crops using AI.', path: '/crop-care', icon: <Sprout className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
+        { id: 'plan', name: t.featurePlannerTitle || 'CropCycle', description: t.featurePlannerSub || 'Create and view CropCycle for your farm.', path: '/plan', icon: <Map className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
+        { id: 'advisory', name: t.featureBusinessTitle || 'Business Advisory', description: t.featureBusinessSub || 'Get business recommendations based on your farm and market.', path: '/advisory', icon: <Briefcase className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
+        { id: 'waste', name: t.featureWasteTitle || 'Waste to Value', description: t.featureWasteSub || 'Explore profitable ways to reuse, sell, or compost farm waste.', path: '/waste-to-value', icon: <Recycle className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> }
     ];
 
     const handleFeatureSelect = (feature: any) => {
@@ -641,7 +641,7 @@ const Chatbot: React.FC = () => {
     );
 
     return (
-        <div className="h-[calc(100dvh-80px)] md:h-[calc(100dvh-100px)] max-w-7xl mx-auto md:p-6 p-0">
+        <div className="h-[calc(100dvh-64px)] max-w-7xl mx-auto md:p-6 p-0 bg-white">
             {Sidebar}
             <ChatLayout>
                 {/* Messages Container */}
@@ -650,14 +650,14 @@ const Chatbot: React.FC = () => {
                 <div
                     ref={chatContainerRef}
                     onScroll={handleScroll}
-                    className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4"
+                    className="flex-1 overflow-y-auto p-4 md:p-6"
                 >
                     {/* Welcome / Empty State */}
                     {messages.length === 0 && !isLoading && (
-                        <div className="flex flex-col items-center justify-center h-full text-center py-12 gap-6">
+                        <div className="flex flex-col items-center justify-center h-full text-center py-12 gap-0">
+                            <img src="/image.png" alt="KrishiSahAI Logo" className="w-64 h-64 md:w-80 md:h-80 object-contain" />
                             <div>
-                                <h2 className="text-2xl font-bold text-[#1B5E20]">{t.chatbot?.welcomeTitle || "Welcome to KrishiSahAI"}</h2>
-                                <p className="text-stone-500 mt-1 text-sm">{t.chatbot?.welcomeSub || "Ask me anything about farming, crops, weather, or government schemes."}</p>
+                                <p className="text-stone-500 text-sm">{t.chatbot?.welcomeSub || "Ask me anything about farming, crops, weather, or government schemes."}</p>
                             </div>
                             {/* Feature Buttons */}
                             <div className="grid grid-cols-2 gap-4 w-full max-w-lg mt-4 px-2">
@@ -686,103 +686,104 @@ const Chatbot: React.FC = () => {
 
                     {/* Messages */}
                     {messages.length > 0 && (
-                        messages.map((msg, i) => (
-                            <div
-                                key={i}
-                                className={`flex items-end gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                            >
-
-
+                        <div className="flex flex-col gap-4">
+                            {messages.map((msg, i) => (
                                 <div
-                                    className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3 ${
-                                        msg.role === 'user'
-                                            ? 'bg-[#1B5E20] text-white rounded-br-sm'
-                                            : 'bg-white border border-gray-200 text-[#002105] rounded-bl-sm shadow-sm'
-                                    }`}
+                                    key={i}
+                                    className={`flex items-end gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                                 >
-                                    {/* Loading / streaming indicator */}
-                                    {msg.role === 'assistant' && !msg.content && isLoading && i === messages.length - 1 ? (
-                                        <div className="flex flex-col gap-2 min-w-[180px]">
-                                            <div className="flex items-center gap-2">
-                                                <span className="flex gap-1">
-                                                    <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                                    <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                                    <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                                </span>
-                                                <span className="text-xs text-stone-400">{t.chatbot?.thinking || "Thinking"}...</span>
-                                            </div>
-                                            {currentFact && (
-                                                <div className="mt-2 border-t border-gray-100 pt-2">
-                                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-0.5">{t.chatbot?.doYouKnow || "Did you know?"} · {currentFact.crop}</p>
-                                                    <p className="text-xs text-stone-500">{currentFact.fact}</p>
+
+
+                                    <div
+                                        className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3 ${
+                                            msg.role === 'user'
+                                                ? 'bg-[#1B5E20] text-white rounded-br-sm'
+                                                : 'bg-white border border-gray-200 text-[#002105] rounded-bl-sm shadow-sm'
+                                        }`}
+                                    >
+                                        {/* Loading / streaming indicator */}
+                                        {msg.role === 'assistant' && !msg.content && isLoading && i === messages.length - 1 ? (
+                                            <div className="flex flex-col gap-2 min-w-[180px]">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="flex gap-1">
+                                                        <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                                        <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                                        <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                                    </span>
+                                                    <span className="text-xs text-stone-400">{t.chatbot?.thinking || "Thinking"}...</span>
                                                 </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <ReactMarkdown
-                                                remarkPlugins={[remarkGfm, remarkBreaks]}
-                                                components={{
-                                                    code: ({ node, className, children, ...props }) => {
-                                                        const isBlock = className?.includes('language-');
-                                                        return isBlock ? (
-                                                            <pre className="bg-black/10 rounded-lg p-3 my-2 overflow-x-auto text-sm font-mono">
-                                                                <code className={className} {...props}>{children}</code>
-                                                            </pre>
-                                                        ) : (
-                                                            <code className="bg-black/10 rounded px-1 py-0.5 text-sm font-mono" {...props}>{children}</code>
-                                                        );
-                                                    },
-                                                    strong: ({ node, ...props }) => <span className={`font-bold ${msg.role === 'user' ? 'text-white' : 'text-[#1B5E20]'}`} {...props} />,
-                                                    ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
-                                                    ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
-                                                    li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                                                    p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                                    h1: ({ node, ...props }) => <h1 className="text-xl font-bold mt-4 mb-2" {...props} />,
-                                                    h2: ({ node, ...props }) => <h2 className="text-lg font-bold mt-3 mb-2" {...props} />,
-                                                }}
-                                            >
-                                                {msg.content || ""}
-                                            </ReactMarkdown>
-                                            {/* TTS Button */}
-                                            {msg.role === 'assistant' && msg.content && (
-                                                <button
-                                                    onClick={() => handleTextToSpeech(msg.content, i)}
-                                                    disabled={isLoadingTTS === i}
-                                                    className="mt-2 flex items-center gap-1 text-[10px] text-stone-400 hover:text-[#1B5E20] transition-colors"
+                                                {currentFact && (
+                                                    <div className="mt-2 border-t border-gray-100 pt-2">
+                                                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-0.5">{t.chatbot?.doYouKnow || "Did you know?"} · {currentFact.crop}</p>
+                                                        <p className="text-xs text-stone-500">{currentFact.fact}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                                                    components={{
+                                                        code: ({ node, className, children, ...props }) => {
+                                                            const isBlock = className?.includes('language-');
+                                                            return isBlock ? (
+                                                                <pre className="bg-black/10 rounded-lg p-3 my-2 overflow-x-auto text-sm font-mono">
+                                                                    <code className={className} {...props}>{children}</code>
+                                                                </pre>
+                                                            ) : (
+                                                                <code className="bg-black/10 rounded px-1 py-0.5 text-sm font-mono" {...props}>{children}</code>
+                                                            );
+                                                        },
+                                                        strong: ({ node, ...props }) => <span className={`font-bold ${msg.role === 'user' ? 'text-white' : 'text-[#1B5E20]'}`} {...props} />,
+                                                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
+                                                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
+                                                        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                                        h1: ({ node, ...props }) => <h1 className="text-xl font-bold mt-4 mb-2" {...props} />,
+                                                        h2: ({ node, ...props }) => <h2 className="text-lg font-bold mt-3 mb-2" {...props} />,
+                                                    }}
                                                 >
-                                                    {isLoadingTTS === i ? (
-                                                        <span className="animate-pulse">Loading...</span>
-                                                    ) : playingMessageId === i ? (
-                                                        <><Square className="w-3 h-3 fill-current" /> Stop</>
-                                                    ) : (
-                                                        <><Volume2 className="w-3 h-3" /> Listen</>
-                                                    )}
-                                                </button>
-                                            )}
-                                        </>
-                                    )}
+                                                    {msg.content || ""}
+                                                </ReactMarkdown>
+                                                {/* TTS Button */}
+                                                {msg.role === 'assistant' && msg.content && (
+                                                    <button
+                                                        onClick={() => handleTextToSpeech(msg.content, i)}
+                                                        disabled={isLoadingTTS === i}
+                                                        className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#1B5E20] bg-[#E8F5E9] hover:bg-[#C8E6C9] border border-[#A5D6A7] px-3 py-1.5 rounded-lg transition-colors"
+                                                    >
+                                                        {isLoadingTTS === i ? (
+                                                            <span className="animate-pulse">Loading...</span>
+                                                        ) : playingMessageId === i ? (
+                                                            <><Square className="w-4 h-4 fill-current" /> Stop</>
+                                                        ) : (
+                                                            <><Volume2 className="w-4 h-4" /> Listen</>
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+
+
                                 </div>
+                            ))}
+                            {/* Roadmap Planner Status Message */}
+                            {location.state?.isRoadmapPlanner && messages[messages.length - 1].role === 'assistant' && !messages[messages.length - 1].content && (
+                                <div className="flex flex-col items-center justify-center p-12 text-center animate-pulse">
+                                    <div className="w-16 h-16 bg-deep-green/10 rounded-full flex items-center justify-center mb-4 mx-auto">
+                                        <User className="w-8 h-8 text-deep-green" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-deep-green">
+                                        {t.chatbot?.makingPlan || 'Making 10-year plan for'} {location.state?.businessName}...
+                                    </h3>
+                                    <p className="text-stone-500 mt-2">{t.chatbot?.analyzingMarket || 'Analyzing market trends and regional data.'}</p>
+                                </div>
+                            )}
 
-
-                            </div>
-                        ))
-                    )}
-
-                    {/* Roadmap Planner Status Message */}
-                    {location.state?.isRoadmapPlanner && messages.length > 0 && messages[messages.length - 1].role === 'assistant' && !messages[messages.length - 1].content && (
-                        <div className="flex flex-col items-center justify-center p-12 text-center animate-pulse">
-                            <div className="w-16 h-16 bg-deep-green/10 rounded-full flex items-center justify-center mb-4">
-                                <User className="w-8 h-8 text-deep-green" />
-                            </div>
-                            <h3 className="text-xl font-bold text-deep-green">
-                                {t.chatbot?.makingPlan || 'Making 10-year plan for'} {location.state?.businessName}...
-                            </h3>
-                            <p className="text-stone-500 mt-2">{t.chatbot?.analyzingMarket || 'Analyzing market trends and regional data.'}</p>
+                            <div ref={messagesEndRef} />
                         </div>
                     )}
-
-                    <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Area */}

@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 import { api } from '../src/services/api';
 import { auth } from '../firebase';
 import { ChatMessage } from '../types';
@@ -99,7 +101,7 @@ const WasteToValue: React.FC = () => {
         if (user && activeChatId) {
             chatService.getChatMessages(user.uid, activeChatId).then(msgs => {
                 setMessages(msgs.map(m => ({
-                    role: m.role === 'assistant' ? 'model' : 'user',
+                    role: (m.role === 'assistant' || m.role === 'model') ? 'model' : 'user',
                     text: m.content
                 })));
                 setView('chat'); // Switch to chat view if we picked a history item
@@ -119,8 +121,6 @@ const WasteToValue: React.FC = () => {
         if (!text) return '';
         // Replace bullet characters with proper markdown list items
         let formatted = text.replace(/•\s*/g, '\n- ');
-        // Ensure double newline before headers so markdown renders them correctly
-        formatted = formatted.replace(/(\*\*[^*]+\*\*:?)/g, '\n\n$1');
         // Clean up excessive blank lines (3+ newlines -> 2)
         formatted = formatted.replace(/\n{3,}/g, '\n\n');
         return formatted.trim();
@@ -439,72 +439,77 @@ const WasteToValue: React.FC = () => {
                     </div>
 
                     {/* Chat Messages */}
-                    <div className="flex-grow p-4 overflow-y-auto space-y-4 bg-[#F5FAF5] scroll-smooth">
+                    <div className="flex-grow p-4 overflow-y-auto bg-[#F5FAF5] scroll-smooth">
                         {messages.length === 0 && (
                             <div className="flex flex-col items-center justify-center h-full text-center text-gray-400 py-10">
                                 <MessageCircle className="w-10 h-10 mb-3 opacity-30" />
                                 <p className="text-sm font-medium">Ask anything about your waste analysis</p>
                             </div>
                         )}
-                        {messages.map((msg, index) => (
-                            <div key={index} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                {/* Bot Avatar (left side) */}
-                                {msg.role !== 'user' && (
-                                    <div className="w-8 h-8 rounded-full bg-white border border-[#E6E6E6] flex items-center justify-center flex-shrink-0 shadow-sm">
-                                        <Bot className="w-4 h-4 text-[#1B5E20]" />
-                                    </div>
-                                )}
+                        {messages.length > 0 && (
+                            <div className="flex flex-col gap-4">
+                                {messages.map((msg, index) => (
+                                    <div key={index} className={`flex items-end gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        {/* Bot Avatar (left side) */}
+                                        {msg.role !== 'user' && (
+                                            <div className="w-8 h-8 rounded-full bg-white border border-[#E6E6E6] flex items-center justify-center flex-shrink-0 shadow-sm">
+                                                <Bot className="w-4 h-4 text-[#1B5E20]" />
+                                            </div>
+                                        )}
 
-                                {/* Message bubble */}
-                                <div
-                                    className={`max-w-[75%] rounded-2xl px-4 py-3 text-[14px] leading-relaxed shadow-sm ${
-                                        msg.role === 'user'
-                                            ? 'bg-[#1B5E20] text-white rounded-br-sm'
-                                            : 'bg-white text-[#1E1E1E] rounded-bl-sm border border-[#E6E6E6]'
-                                    }`}
-                                >
-                                    {msg.role === 'user' ? (
-                                        <p className="whitespace-pre-wrap">{msg.text}</p>
-                                    ) : (
-                                        <ReactMarkdown
-                                            components={{
-                                                p: ({ node, ...props }) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
-                                                ul: ({ node, ...props }) => <ul className="list-disc list-outside mb-2 ml-4 space-y-1" {...props} />,
-                                                ol: ({ node, ...props }) => <ol className="list-decimal list-outside mb-2 ml-4 space-y-1" {...props} />,
-                                                li: ({ node, ...props }) => <li className="leading-snug" {...props} />,
-                                                strong: ({ node, ...props }) => <strong className="font-bold text-[#1B5E20]" {...props} />,
-                                                h1: ({ node, ...props }) => <h1 className="text-base font-bold mb-1 text-[#1B5E20] mt-3 first:mt-0 border-b border-green-100 pb-1" {...props} />,
-                                                h2: ({ node, ...props }) => <h2 className="text-sm font-bold mb-1 text-[#1B5E20] mt-2 first:mt-0" {...props} />,
-                                                h3: ({ node, ...props }) => <h3 className="text-sm font-semibold mb-1 text-[#1B5E20] mt-2 first:mt-0" {...props} />,
-                                                hr: () => <hr className="my-2 border-gray-100" />,
-                                            }}
+                                        {/* Message bubble */}
+                                        <div
+                                            className={`max-w-[75%] rounded-2xl px-4 py-3 text-[14px] leading-relaxed shadow-sm ${
+                                                msg.role === 'user'
+                                                    ? 'bg-[#1B5E20] text-white rounded-br-sm'
+                                                    : 'bg-white text-[#1E1E1E] rounded-bl-sm border border-[#E6E6E6]'
+                                            }`}
                                         >
-                                            {formatMessage(msg.text)}
-                                        </ReactMarkdown>
-                                    )}
-                                </div>
+                                            {msg.role === 'user' ? (
+                                                <p className="whitespace-pre-wrap">{msg.text}</p>
+                                            ) : (
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                                                    components={{
+                                                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
+                                                        ul: ({ node, ...props }) => <ul className="list-disc list-outside mb-2 ml-4 space-y-1" {...props} />,
+                                                        ol: ({ node, ...props }) => <ol className="list-decimal list-outside mb-2 ml-4 space-y-1" {...props} />,
+                                                        li: ({ node, ...props }) => <li className="leading-snug" {...props} />,
+                                                        strong: ({ node, ...props }) => <strong className="font-bold text-[#1B5E20]" {...props} />,
+                                                        h1: ({ node, ...props }) => <h1 className="text-base font-bold mb-1 text-[#1B5E20] mt-3 first:mt-0 border-b border-green-100 pb-1" {...props} />,
+                                                        h2: ({ node, ...props }) => <h2 className="text-sm font-bold mb-1 text-[#1B5E20] mt-2 first:mt-0" {...props} />,
+                                                        h3: ({ node, ...props }) => <h3 className="text-sm font-semibold mb-1 text-[#1B5E20] mt-2 first:mt-0" {...props} />,
+                                                        hr: () => <hr className="my-2 border-gray-100" />,
+                                                    }}
+                                                >
+                                                    {formatMessage(msg.text)}
+                                                </ReactMarkdown>
+                                            )}
+                                        </div>
 
-                                {/* User Avatar (right side) */}
-                                {msg.role === 'user' && (
-                                    <div className="w-8 h-8 rounded-full bg-[#1B5E20] flex items-center justify-center flex-shrink-0 shadow-sm">
-                                        <User className="w-4 h-4 text-white" />
+                                        {/* User Avatar (right side) */}
+                                        {msg.role === 'user' && (
+                                            <div className="w-8 h-8 rounded-full bg-[#1B5E20] flex items-center justify-center flex-shrink-0 shadow-sm">
+                                                <User className="w-4 h-4 text-white" />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                                {isChatLoading && (
+                                    <div className="flex items-end gap-2 justify-start">
+                                        <div className="w-8 h-8 rounded-full bg-white border border-[#E6E6E6] flex items-center justify-center flex-shrink-0 shadow-sm">
+                                            <Bot className="w-4 h-4 text-[#1B5E20]" />
+                                        </div>
+                                        <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm border border-[#E6E6E6] shadow-sm flex items-center gap-1.5">
+                                            <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce" style={{animationDelay:'0ms'}}></span>
+                                            <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce" style={{animationDelay:'150ms'}}></span>
+                                            <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce" style={{animationDelay:'300ms'}}></span>
+                                        </div>
                                     </div>
                                 )}
-                            </div>
-                        ))}
-                        {isChatLoading && (
-                            <div className="flex items-end gap-2 justify-start">
-                                <div className="w-8 h-8 rounded-full bg-white border border-[#E6E6E6] flex items-center justify-center flex-shrink-0 shadow-sm">
-                                    <Bot className="w-4 h-4 text-[#1B5E20]" />
-                                </div>
-                                <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm border border-[#E6E6E6] shadow-sm flex items-center gap-1.5">
-                                    <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce" style={{animationDelay:'0ms'}}></span>
-                                    <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce" style={{animationDelay:'150ms'}}></span>
-                                    <span className="w-2 h-2 bg-[#1B5E20] rounded-full animate-bounce" style={{animationDelay:'300ms'}}></span>
-                                </div>
+                                <div ref={messagesEndRef} />
                             </div>
                         )}
-                        <div ref={messagesEndRef} />
                     </div>
 
                     {/* Input Area */}

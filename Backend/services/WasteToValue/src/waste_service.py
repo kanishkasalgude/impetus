@@ -152,6 +152,8 @@ class WasteToValueEngine:
             - **ALWAYS use double newlines** between paragraphs.
             - Keep responses concise but well-structured.
             - Be encouraging and practical (Indian context).
+            - CRITICAL: STRICTLY stick to ONE language: {language}. DO NOT mix languages.
+            - CRITICAL: DO NOT use ANY emojis in your entire response.
             
             Do not hallucinate new options not in the context unless asked for alternatives.
             """),
@@ -202,6 +204,8 @@ class WasteToValueEngine:
             - **ALWAYS use double newlines** between paragraphs.
             - Keep responses concise but well-structured.
             - Be encouraging and practical (Indian context).
+            - CRITICAL: STRICTLY stick to ONE language: {language}. DO NOT mix languages.
+            - CRITICAL: DO NOT use ANY emojis in your entire response.
             
             Do not hallucinate new options not in the context unless asked for alternatives.
             """),

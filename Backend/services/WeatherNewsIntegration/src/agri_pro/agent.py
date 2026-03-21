@@ -17,9 +17,9 @@ class AgriAgent:
         self.weather_service = WeatherService()
         self.news_service = NewsService()
 
-    async def generate_advisory(self, farmer_profile, news_count=5):
+    async def generate_advisory(self, farmer_profile, news_count=5, mode='personalized'):
         """
-        Generates a personalized advisory for the farmer.
+        Generates an advisory (personalized or general).
         """
         # 1. Fetch Weather
         location_parts = []
@@ -36,31 +36,63 @@ class AgriAgent:
         weather_data = await self.weather_service.get_weather(location_query)
         
         # 2. Fetch News
-        crops = farmer_profile.get("crops", [])
-        print(f"Fetching integrated news for crops: {crops}...")
-        news_data = await self.news_service.get_personalized_news(crops, location_query)
-        
+        if mode == 'general':
+            print("Fetching broad general agriculture news...")
+            news_data = await self.news_service.get_general_news()
+        else:
+            # Personalized Mode (Hierarchical: District -> State -> National)
+            district = farmer_profile.get("location", {}).get("district", "")
+            state = farmer_profile.get("location", {}).get("state", "")
+            crops = farmer_profile.get("crops", [])
+            
+            print(f"Fetching integrated news for crops: {crops}...")
+            
+            # Try District Level
+            dist_query = f"{district}, {state}" if district and state else state or "India"
+            news_data = await self.news_service.get_personalized_news(crops, dist_query)
+            
+            # If insufficient (less than 3 items), try State Level
+            if not isinstance(news_data, list) or len(news_data) < 3:
+                print(f"Insufficient district news for {district}. Expanding to state level: {state}")
+                state_news = await self.news_service.get_personalized_news(crops, state)
+                if isinstance(state_news, list):
+                    # Combine results, avoiding duplicates
+                    existing_urls = {n.get("url") for n in (news_data if isinstance(news_data, list) else [])}
+                    for item in state_news:
+                        if item.get("url") not in existing_urls:
+                            if not isinstance(news_data, list): news_data = []
+                            news_data.append(item)
+            
+            # If still insufficient (less than 5 items), try National Level
+            if not isinstance(news_data, list) or len(news_data) < 5:
+                print("Insufficient state news. Expanding to national level.")
+                national_news = await self.news_service.get_personalized_news(crops, "India")
+                if isinstance(national_news, list):
+                    existing_urls = {n.get("url") for n in (news_data if isinstance(news_data, list) else [])}
+                    for item in national_news:
+                        if item.get("url") not in existing_urls:
+                            if not isinstance(news_data, list): news_data = []
+                            news_data.append(item)
+
         if isinstance(news_data, dict) and "error" in news_data:
             print(f"News Error: {news_data['error']}")
             news_data = []
         elif isinstance(news_data, list):
-            # Limit news items
-            news_data = news_data[:news_count]
+            # Limit news items to 10 max
+            news_data = news_data[:10]
         else:
             news_data = []
 
         # 3. Construct Context for LLM
         context = {
+            "mode": mode,
             "farmer_profile": farmer_profile,
             "weather_data": weather_data,
             "news_data": news_data
         }
 
-        # 4. Call LLM (Synchronous for now as it uses requests internally in _call_ollama, 
-        # or we should async-ify that too. Keeping it sync for valid MVP step-by-step)
+        # 4. Call LLM
         print("Querying Ollama...")
-        # Since _call_ollama is sync, we can call it directly. 
-        # If we want full async, we should update _call_ollama too.
         advisory_json = self._call_ollama(context)
         
         return advisory_json
@@ -70,35 +102,88 @@ class AgriAgent:
         Calls the local Ollama instance with a system prompt and context.
         """
         system_prompt = """
-Act as a professional agricultural risk advisor for the specific farmer profile provided.
-Your output affects real farmers' decisions. Be precise, actionable, and conservative.
+You are an advanced agricultural intelligence system working for KrishiSahAI, a farmer advisory platform designed for smallholder farmers in India. Your primary objective is to provide only the most relevant, recent, and actionable agricultural news and weather-based guidance that can directly help farmers make decisions.
 
-INPUT DATA Provided:
-- Farmer Profile (Name, Location, Land, Soil, Crops, Market) -> USE THIS EXACTLY. DO NOT INVENT A PROFILE.
-- Weather Data (Real-time from API) -> PRIMARY SOURCE.
-- News Data (Real-time from API) -> SECONDARY SOURCE.
+The system operates in two modes: personalized mode (using specific farmer data) and general mode.
 
-STRICT RULES:
-1. **LOCATION**: Use the exact location in the profile ({profile_location}). DO NOT default to Nashik or any other place.
-2. **WEATHER**: You MUST analyze the provided weather data. Mention temperature, condition, and any alerts. 
-   - If weather data is missing/empty, state "Weather data currently unavailable".
-3. **NEWS**: Summarize at least 5 relevant news items from the provided list.
-4. **ADVICE**: tailored to the specific crops ({crops}) and soil ({soil}) provided.
+### CORE LOGIC & PRIORITY:
+- **Personalized Mode**: Think from the perspective of the specific farmer provided in the context. Focus on hyperlocal and crop-specific risks/opportunities.
+- **General Mode**: Shift to large-scale impact affecting farmers at the state or national level. Focus on broad developments (MSP, major schemes, national weather).
 
-OUTPUT FORMAT (JSON ONLY):
+Evaluate information in this strict priority order:
+1. **HIGH-RISK SITUATIONS (CRITICAL)**: 
+   Detect pest attacks, disease outbreaks, and extreme weather (heavy rain, drought, heatwaves) affecting the relevant area (District for personalized, State/National for general).
+   
+2. **MARKET DEVELOPMENTS**: 
+   Look for mandi price changes, demand shifts, or MSP updates. Advice whether to sell, store, or wait.
+
+3. **GOVERNMENT UPDATES**: 
+   Identify schemes, subsidies, or registration deadlines. Prioritize items where missing a deadline causes a loss.
+
+4. **ADVISORIES & BEST PRACTICES**: 
+   Include only if higher priority info is limited. Focus on season-appropriate guidance.
+
+### OPERATIONAL RULES:
+- **Location Intelligence**: In personalized mode, prioritize District. In general mode, prioritize State/National.
+- **Crop Relevance**: In personalized mode, strictly filter for {crops}. In general mode, include high-impact news for any major agricultural sector.
+- **Filtering**: Reject info older than 7 days, non-actionable content, or unrelated news.
+- **Actionable Output**: Every item MUST include a clear, specific, and practical action ("What should the farmer do now?").
+- **Weather Summary**: In personalized mode, relate it to {crops} and {soil}. In general mode, summarize the overall regional/national outlook.
+- **LANGUAGE CONSISTENCY** (MANDATORY — Read Every Rule):
+
+  a) ABSOLUTE RULE: Generate the ENTIRE response ONLY in the selected language (Hindi, Marathi, or English) as determined by the user profile.
+
+  b) IF HINDI IS SELECTED:
+     - Use only pure Hindi in Devanagari script.
+     - Avoid English words completely, including in headlines, summaries, and action fields.
+     - Replace ALL technical terms with Hindi equivalents (e.g., "बाढ़" instead of "Flood", "कीटनाशक" instead of "Pesticide").
+     - If no direct translation exists, explain it in simple Hindi. Do NOT insert the English term.
+
+  c) IF MARATHI IS SELECTED:
+     - Use only pure Marathi in Devanagari script.
+     - Do NOT mix Hindi or English words in any output field.
+     - Use natural, regionally appropriate Marathi expressions.
+     - Translate or explain all technical concepts in Marathi.
+
+  d) IF ENGLISH IS SELECTED:
+     - Use simple, clear English. Do NOT insert Hindi or Marathi words.
+     - Keep explanations easy for non-technical farmers.
+
+  e) ERROR HANDLING: If any field value cannot be expressed in the selected language, do NOT switch. Simplify the information in the same language.
+
+  f) INTERNAL VALIDATION: BEFORE producing the final JSON, verify:
+     - Are ALL field values in the selected language?
+     - Any accidental language mixing in headlines or actions?
+     - Are technical terms localized?
+     - If any violation is found, regenerate before outputting.
+
+  g) FAILURE CONDITIONS (NEVER do these):
+     - Any English word in a Hindi/Marathi response.
+     - Mixed-language sentences.
+     - Technical terms left in English when Hindi or Marathi is selected.
+
+- **NO EMOJIS**: DO NOT use ANY emojis in your entire response.
+
+### OUTPUT FORMAT (JSON ONLY):
 {
   "priority_level": "HIGH | MEDIUM | LOW",
-  "weather_summary": "Detailed summary including temp, humidity, and condition. (e.g. 'Current temp is 35C with clear skies...')",
-  "weather_alerts": ["Alert 1"],
+  "weather_summary": "Friendly summary of current weather and its immediate impact on {crops}.",
+  "weather_alerts": ["Specific weather-related warnings for the district/state"],
   "relevant_agri_news": [
     {
-      "headline": "Headline",
-      "summary": "Summary"
+      "headline": "Farmer-friendly Headline",
+      "summary": "Clear explanation of what is happening and why it matters.",
+      "action": "Immediate practical step for the farmer (e.g., 'Apply [Treatment] immediately').",
+      "category": "RISK | MARKET | GOVERNMENT | ADVISORY",
+      "url": "Original URL",
+      "source": "Source Name",
+      "published_at": "Original Date",
+      "image": "Image URL (if any)"
     }
   ],
   "personalized_advice": [
-    "Advice 1 (Specific to {crops} and {soil})",
-    "Advice 2 (Based on {market_access})"
+    "Advice 1 based on soil {soil} and stage {stage}",
+    "Advice 2 based on market/weather"
   ],
   "next_actions_for_farmer": [
     "Immediate Action 1",
@@ -111,11 +196,13 @@ OUTPUT FORMAT (JSON ONLY):
         crops = ", ".join(context['farmer_profile'].get('crops', []))
         soil = context['farmer_profile'].get('soil_type', '')
         market_access = context['farmer_profile'].get('market_access', '')
+        stage = context['farmer_profile'].get('farming_stage', 'Unknown')
         
         system_prompt = system_prompt.replace("{profile_location}", profile_location)
         system_prompt = system_prompt.replace("{crops}", crops)
         system_prompt = system_prompt.replace("{soil}", soil)
         system_prompt = system_prompt.replace("{market_access}", market_access)
+        system_prompt = system_prompt.replace("{stage}", stage)
 
         user_message = json.dumps(context)
 

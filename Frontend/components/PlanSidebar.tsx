@@ -43,7 +43,7 @@ export const PlanSidebar: React.FC<PlanSidebarProps> = ({
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 <div className="p-4 flex items-center justify-between border-b border-[#E0E6E6]">
-                    <h2 className="text-lg font-bold text-[#002105]">Planner Options</h2>
+                    <h2 className="text-lg font-bold text-[#002105]">CropCycle Options</h2>
                     <button onClick={onClose} className={`${isDrawer ? '' : 'md:hidden'} p-2 text-stone-500 hover:text-stone-800`}>
                         <X className="w-5 h-5" />
                     </button>

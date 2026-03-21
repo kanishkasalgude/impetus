@@ -72,7 +72,7 @@ const Planner: React.FC = () => {
                 if (response.success && response.roadmap) {
                     setRoadmap(response.roadmap);
                 } else {
-                    setError("Failed to generate crop planner.");
+                    setError("Failed to generate CropCycle.");
                 }
             } catch (err: any) {
                 console.error("Planner Error:", err);
@@ -114,7 +114,7 @@ const Planner: React.FC = () => {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `KrishiSahAI_CropPlanner_${(selectedCrop || '').replace(/\s+/g, '_')}.pdf`;
+            link.download = `KrishiSahAI_CropCycle_${(selectedCrop || '').replace(/\s+/g, '_')}.pdf`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -132,7 +132,7 @@ const Planner: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
                 <Loader2 className="w-16 h-16 text-[#1B5E20] animate-spin mb-4" />
-                <h2 className="text-2xl font-bold text-[#1E1E1E]">{t.generatingRoadmap || 'Generating Plan...'}</h2>
+                <h2 className="text-2xl font-bold text-[#1E1E1E]">{t.generatingRoadmap || 'Generating CropCycle...'}</h2>
                 <p className="text-[#555555] mt-2">{t.analyzingRoadmap || 'Analyzing crop lifecycle...'}</p>
             </div>
         );
@@ -145,7 +145,7 @@ const Planner: React.FC = () => {
                     <div className="inline-flex items-center justify-center p-4 bg-[#E6F4EA] rounded-full mb-6">
                         <TrendingUp className="w-10 h-10 text-[#1B5E20]" />
                     </div>
-                    <h2 className="text-3xl font-extrabold text-[#1E1E1E] mb-4">Select a Crop to Plan</h2>
+                    <h2 className="text-3xl font-extrabold text-[#1E1E1E] mb-4">Select a Crop for CropCycle</h2>
                     <p className="text-gray-500 mb-8 max-w-lg mx-auto text-lg">Your farm has multiple crops. Please choose one to generate a customized, AI-driven Smart Planner.</p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
@@ -170,7 +170,7 @@ const Planner: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center">
                 <AlertTriangle className="w-16 h-16 text-yellow-500 mb-4" />
-                <h2 className="text-2xl font-bold text-[#1E1E1E] mb-2">{t.analysisFailed || 'Planner Error'}</h2>
+                <h2 className="text-2xl font-bold text-[#1E1E1E] mb-2">{t.analysisFailed || 'CropCycle Error'}</h2>
                 <p className="text-gray-500 mb-6 max-w-md">{error}</p>
                 <button
                     onClick={() => navigate('/')}
@@ -288,7 +288,9 @@ const Planner: React.FC = () => {
                                             <div className="space-y-4">
                                                 <div>
                                                     <h4 className="text-xs font-bold text-[#1B5E20] uppercase tracking-widest mb-1">{t.home?.criticalFocus || 'Critical Focus'}</h4>
-                                                    <p className="text-[#333] font-bold text-lg">{year.focus}</p>
+                                                    <div className="text-[#333] font-bold text-lg prose prose-green max-w-none">
+                                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{year.focus}</ReactMarkdown>
+                                                    </div>
                                                 </div>
 
                                                 <div>
@@ -297,7 +299,9 @@ const Planner: React.FC = () => {
                                                         {year.actions?.map((action, aIdx) => (
                                                             <li key={aIdx} className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
                                                                 <CheckCircle className="w-5 h-5 text-deep-green flex-shrink-0" />
-                                                                <span className="text-sm font-bold text-[#555]">{action}</span>
+                                                                <div className="text-sm font-bold text-[#555] prose prose-green max-w-none">
+                                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{action}</ReactMarkdown>
+                                                                </div>
                                                             </li>
                                                         ))}
                                                     </ul>

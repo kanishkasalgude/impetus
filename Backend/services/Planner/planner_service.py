@@ -73,7 +73,7 @@ class CropPlannerGenerator:
                 "actions": "Required Actions",
                 "profit": "Projected Value/Yield",
                 "time_term": "Week/Month",
-                "headers": ["Crop Overview", "1. Crop Lifecycle Planner", "2. Resource & Labor Management", "3. Quality & Harvest Sustainability", "4. Market & Risk Management", "5. Final Harvest Verdict"]
+                "headers": ["Crop Overview", "1. CropCycle", "2. Resource & Labor Management", "3. Quality & Harvest Sustainability", "4. Market & Risk Management", "5. Final Harvest Verdict"]
             },
             "HI": {
                 "milestone": "जीवनचक्र उपलब्धि",
@@ -115,7 +115,38 @@ Guidelines:
 4. STRICTLY NO EMOJIS. Use professional Markdown formatting.
 5. All strategies, pricing, and recommendations MUST be tailored to the Indian agricultural market context.
 6. ALL financial values, costs, or profits MUST be in Indian Rupees (₹). DO NOT use dollars ($).
-7. Output the response in {context['language_name']}.
+7. LANGUAGE CONSISTENCY (MANDATORY — Read Every Rule):
+
+   a) ABSOLUTE RULE: Generate the ENTIRE response ONLY in {context['language_name']}.
+
+   b) IF HINDI IS SELECTED:
+      - Use only pure Hindi in Devanagari script.
+      - Avoid English words completely, including phase names, headings, and labels.
+      - Replace ALL technical terms with Hindi equivalents (e.g., "बुआई" instead of "Sowing", "सिंचाई" instead of "Irrigation").
+      - If no direct translation exists, explain in simple Hindi.
+
+   c) IF MARATHI IS SELECTED:
+      - Use only pure Marathi in Devanagari script.
+      - Do NOT mix Hindi or English words.
+      - Use natural, regionally appropriate Marathi expressions for all phases and labels.
+      - Translate or explain all technical concepts.
+
+   d) IF ENGLISH IS SELECTED:
+      - Use simple, clear English. Do NOT insert Hindi or Marathi words.
+
+   e) ERROR HANDLING: If any phase/section cannot be expressed in {context['language_name']}, do NOT switch. Simplify in the same language.
+
+   f) INTERNAL VALIDATION: BEFORE producing the final response, verify:
+      - Are ALL words and phase names in {context['language_name']}?
+      - Any accidental English words?
+      - If any violation is found, regenerate before outputting.
+
+   g) FAILURE CONDITIONS (NEVER do these):
+      - Any word from another language in the response.
+      - Phase names or section headings in English when Hindi or Marathi is selected.
+      - Technical terms left in English.
+
+8. NO EMOJIS: DO NOT use ANY emojis in your entire response.
 
 Structure (Use these exact Headers in {context['language_name']}):
 
@@ -168,14 +199,14 @@ DISCLAIMER: This roadmap is an AI-generated simulation based on provided data an
             return roadmap_json
         except Exception as e:
             print(f"[CROP-ROADMAP ERROR] {e}")
-            return {"title": f"Crop Lifecycle Planner for {crop_name} (Error)", "overview": str(e), "years": [], "verdict": "Error"}
+            return {"title": f"LifeCycle for {crop_name} (Error)", "overview": str(e), "years": [], "verdict": "Error"}
 
     def parse_markdown_roadmap(self, text, crop_name, language='EN'):
         import re
         
-        title_prefix = "Crop Lifecycle"
+        title_prefix = "CropCycle"
         roadmap = {
-            "title": f"{title_prefix} Planner for {crop_name}",
+            "title": f"{title_prefix} for {crop_name}",
             "overview": "",
             "years": [],
             "labor_analysis": "",
@@ -187,12 +218,12 @@ DISCLAIMER: This roadmap is an AI-generated simulation based on provided data an
 
         # Multi-language header mapping for the parser
         HEADERS = {
-            "overview": r'# (?:Overview|अवलोकन|आढावा|Crop Overview|फसल अवलोकन|पीक आढावा)',
-            "planner": r'# (?:1\. 10-Year Growth & Profit Planner|1\. 10-वर्षीय विकास और लाभ योजनाकार|1\. 10-वर्षांचे विकास आणि नफा नियोजक|1\. Crop Lifecycle Planner|1\. फसल जीवनचक्र योजनाकार|1\. पीक जीवनचक्र नियोजक)',
-            "labor": r'# (?:2\. Labor & Aging Analysis|2\. श्रम और उम्र बढ़ने का विश्लेषण|2\. श्रम आणि वृद्धत्व विश्लेषण|2\. Resource & Labor Management|2\. संसाधन और श्रम प्रबंधन|2\. संसाधन आणि श्रम व्यवस्थापन)',
-            "sustainability": r'# (?:3\. Sustainability & Succession|3\. स्थिरता और उत्तराधिकार|3\. शाश्वतता आणि उत्तराधिकार|3\. Quality & Harvest Sustainability|3\. गुणवत्ता और फसल स्थिरता|3\. गुणवत्ता आणि पीक शाश्वतता)',
-            "resilience": r'# (?:4\. Financial Resilience|4\. वित्तीय लचीलापन|4\. आर्थिक लवचिकता|4\. Market & Risk Management|4\. बाजार और जोखिम प्रबंधन|4\. बाजार आणि जोखीम व्यवस्थापन)',
-            "verdict": r'# (?:5\. Final Verdict|5\. अंतिम निर्णय|5\. अंतिम निकाल|5\. Final Harvest Verdict|5\. अंतिम फसल निर्णय|5\. अंतिम पीक निकाल)'
+            "overview": r'#\s*(?:Overview|अवलोकन|आढावा|Crop Overview|फसल अवलोकन|पीक आढावा)',
+            "planner": r'#\s*1\.\s*(?:10-Year Growth & Profit Planner|10-वर्षीय विकास और लाभ योजनाकार|10-वर्षांचे विकास आणि नफा नियोजक|CropCycle|LifeCycle|फसल जीवनचक्र योजनाकार|पीक जीवनचक्र नियोजक)',
+            "labor": r'#\s*2\.\s*(?:Labor & Aging Analysis|श्रम और उम्र बढ़ने का विश्लेषण|श्रम आणि वृद्धत्व विश्लेषण|Resource & Labor Management|संसाधन और श्रम प्रबंधन|संसाधन आणि श्रम व्यवस्थापन)',
+            "sustainability": r'#\s*3\.\s*(?:Sustainability & Succession|स्थिरता और उत्तराधिकार|शाश्वतता आणि उत्तराधिकार|Quality & Harvest Sustainability|गुणवत्ता और फसल स्थिरता|गुणवत्ता आणि पीक शाश्वतता)',
+            "resilience": r'#\s*4\.\s*(?:Financial Resilience|वित्तीय लचीलापन|आर्थिक लवचिकता|Market & Risk Management|बाजार और जोखिम प्रबंधन|बाजार आणि जोखीम व्यवस्थापन)',
+            "verdict": r'#\s*5\.\s*(?:Final Verdict|अंतिम निर्णय|अंतिम निकाल|Final Harvest Verdict|अंतिम फसल निर्णय|अंतिम पीक निकाल)'
         }
 
         def extract_between(start_regex, end_regex=None):
@@ -218,7 +249,7 @@ DISCLAIMER: This roadmap is an AI-generated simulation based on provided data an
             roadmap['verdict'] = verdict_block
 
         # Parse Years/Phases (Flexible for "Year", "वर्ष", "Phase", etc.)
-        year_pattern = r'## (?:Year|वर्ष|Phase) (\d+): (.*?)\n(.*?)(?=## (?:Year|वर्ष|Phase) \d+:|\Z|# [2345])'
+        year_pattern = r'##\s*(?:Year|वर्ष|Phase)\s*(\d+)\s*:\s*(.*?)\n(.*?)(?=##\s*(?:Year|वर्ष|Phase)\s*\d+\s*:|\Z|#\s*[2345])'
         year_blocks = re.findall(year_pattern, text, re.DOTALL | re.IGNORECASE)
         
         # Labels for inner fields can also be translated (robust to asterisks and colons)

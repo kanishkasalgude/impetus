@@ -1,6 +1,7 @@
 import os
 import httpx
 import asyncio
+from datetime import datetime, timedelta
 
 class NewsService:
     def __init__(self):
@@ -19,12 +20,16 @@ class NewsService:
              
         query = self._generate_news_query(crops, location, personalized=True)
         
+        # Calculate date 7 days ago
+        seven_days_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        
         url = f"{self.base_url}/search"
         params = {
             "q": query,
-            "lang": "en", # Default to English for now, API supports others
+            "lang": "en",
             "country": "in",
-            "max": 10,  # Increased to get more local results
+            "max": 10,
+            "from": seven_days_ago,
             "apikey": self.api_key
         }
         
@@ -53,12 +58,15 @@ class NewsService:
              
         query = self._generate_news_query([], "India", personalized=False)
         
+        seven_days_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        
         url = f"{self.base_url}/search"
         params = {
             "q": query,
             "lang": "en",
             "country": "in",
             "max": 10,
+            "from": seven_days_ago,
             "apikey": self.api_key
         }
         
@@ -107,9 +115,8 @@ class NewsService:
         else:
             # Case 3: General News
             # Focus on National/Global trends, Government, Tech
-            # Exclude specific local terms to avoid overlap
-            query = "(Agriculture OR Farming OR AgTech OR Hydroponics OR Organic Farming)"
-            query += " AND (Government Scheme OR Subsidy OR New Technology OR Innovation OR Startup OR Policy)"
+            # A broader query to ensure results in the last 7 days
+            query = "Agriculture AND (India OR Policy OR Scheme OR Market OR Farming OR AgTech)"
             
         return query
 
@@ -122,20 +129,27 @@ class NewsService:
             
         articles = raw_data.get("articles", [])
         processed = []
+        seen_titles = set()
         
         for article in articles:
+            title = article.get("title", "").strip()
+            if not title or title in seen_titles:
+                continue
+            
+            seen_titles.add(title)
+            
             summary = article.get("description", "")
             if summary and len(summary) > 200:
                 summary = summary[:197] + "..."
                 
             processed.append({
-                "headline": article.get("title"),
+                "headline": title,
                 "source": article.get("source", {}).get("name"),
                 "summary": summary,
                 "url": article.get("url"),
                 "published_at": article.get("publishedAt"),
-                "image": article.get("image"), # Helpful for UI
-                "content": article.get("content") # Full/Truncated content
+                "image": article.get("image"),
+                "content": article.get("content")
             })
             
         return processed
