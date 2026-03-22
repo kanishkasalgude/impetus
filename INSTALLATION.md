@@ -1,4 +1,4 @@
-﻿# KrishiSahAI Advisory: Installation and Setup Guide
+# KrishiSahAI Advisory: Installation and Setup Guide
 
 This guide covers the complete process for setting up KrishiSahAI Advisory from a fresh repository clone through a fully operational local development environment. Follow each section in order.
 

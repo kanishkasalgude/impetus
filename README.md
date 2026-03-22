@@ -1,4 +1,4 @@
-﻿<p align="center">
+<p align="center">
   <img src="./Logo/KrishiSahAI.png" width="120" alt="KrishiSahAI Logo" />
 </p>
 

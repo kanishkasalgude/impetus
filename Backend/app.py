@@ -390,45 +390,66 @@ def init_advisor():
             except (ValueError, TypeError):
                 return default
 
+        # 1. Get User Profile from Firestore to enrich context
+        user_id = request.user.get('uid')
+        firestore_profile = {}
+        if user_id:
+            try:
+                import firebase_admin
+                from firebase_admin import firestore
+                db = firestore.client()
+                user_doc = db.collection('users').document(user_id).get()
+                if user_doc.exists:
+                    firestore_profile = user_doc.to_dict()
+                    print(f"[ADVISOR] Enriched profile from Firestore for UID: {user_id}")
+            except Exception as fe:
+                print(f"[ADVISOR WARNING] Firestore fetch failed: {fe}")
+
+        # 2. Re-map Firestore fields if they differ from API request names
+        # Firestore usually uses camelCase or specific names from the frontend
+        def get_val(key, default=None):
+            # Priority: Request JSON > Firestore > Default
+            return data.get(key, firestore_profile.get(key, firestore_profile.get(key.replace('_', ''), default)))
+
         profile = FarmerProfile(
-            name=name,
-            land_size=safe_float(data.get('land_size'), 5.0),
-            capital=safe_float(data.get('capital'), 100000.0),
-            market_access=data.get('market_access', 'moderate'),
-            skills=data.get('skills', []),
-            risk_level=data.get('risk_level', 'medium'),
-            time_availability=data.get('time_availability', 'full-time'),
-            experience_years=int(data.get('experience_years', 0)),
-            language=data.get('language', 'english').lower(),
-            selling_preference=data.get('selling_preference'),
-            recovery_timeline=data.get('recovery_timeline'),
-            loss_tolerance=data.get('loss_tolerance'),
-            risk_preference=data.get('risk_preference'),
-            age=data.get('age'),
-            role=data.get('role', 'farmer'),
-            state=data.get('state'),
-            district=data.get('district'),
-            village=data.get('village'),
-            soil_type=data.get('soil_type'),
-            water_availability=data.get('water_availability'),
-            crops_grown=data.get('crops_grown', []),
-            land_unit=data.get('land_unit', 'acres'),
+            name=get_val('name', 'Farmer'),
+            land_size=safe_float(get_val('land_size', get_val('landSize')), 5.0),
+            capital=safe_float(get_val('capital'), 100000.0),
+            market_access=get_val('market_access', 'moderate'),
+            skills=get_val('skills', []),
+            risk_level=get_val('risk_level', 'medium'),
+            time_availability=get_val('time_availability', 'full-time'),
+            experience_years=int(get_val('experience_years', get_val('experience', 0))),
+            language=get_val('language', 'english').lower(),
+            selling_preference=get_val('selling_preference'),
+            recovery_timeline=get_val('recovery_timeline'),
+            loss_tolerance=get_val('loss_tolerance'),
+            risk_preference=get_val('risk_preference'),
+            age=get_val('age'),
+            role=get_val('role', 'farmer'),
+            state=get_val('state'),
+            district=get_val('district'),
+            village=get_val('village'),
+            soil_type=get_val('soil_type'),
+            water_availability=get_val('water_availability'),
+            crops_grown=get_val('crops_grown', get_val('cropsGrown', [])),
+            land_unit=get_val('land_unit', get_val('landUnit', 'acres')),
             
             # Additional Fields
-            current_profit=data.get('current_profit'),
-            running_plan=data.get('running_plan'),
-            space_type=data.get('space_type'),
-            covered_space=data.get('covered_space'),
-            infra_type=data.get('infra_type'),
-            electricity=data.get('electricity'),
-            animal_handling=data.get('animal_handling'),
-            daily_labor=data.get('daily_labor'),
-            hands_on_work=data.get('hands_on_work'),
-            income_comfort=data.get('income_comfort'),
-            main_goal=data.get('main_goal'),
-            interests=data.get('interests', []),
-            total_land=safe_float(data.get('total_land'), 0.0),
-            farm_name=data.get('farm_name')
+            current_profit=get_val('current_profit'),
+            running_plan=get_val('running_plan'),
+            space_type=get_val('space_type', get_val('spaceType')),
+            covered_space=get_val('covered_space', get_val('coveredSpace')),
+            infra_type=get_val('infra_type', get_val('infraType')),
+            electricity=get_val('electricity'),
+            animal_handling=get_val('animal_handling'),
+            daily_labor=get_val('daily_labor'),
+            hands_on_work=get_val('hands_on_work'),
+            income_comfort=get_val('income_comfort'),
+            main_goal=get_val('main_goal'),
+            interests=get_val('interests', []),
+            total_land=safe_float(get_val('total_land', get_val('totalLand')), 0.0),
+            farm_name=get_val('farm_name', get_val('activeFarmName'))
         )
         
         session_id = str(uuid.uuid4())

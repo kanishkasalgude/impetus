@@ -706,7 +706,7 @@
         "acres": "acres",
         "availableLand": "Available Land: {size} acres",
         "plotPlaceholder": "Enter plot size for business...",
-        "plotError": "⚠️ Cannot exceed available land ({size} acres)",
+        "plotError": " Cannot exceed available land ({size} acres)",
         "plotHint": "Enter how much land you plan to use for your new agri-business. (Must be less than {size} acres)",
         "locationLabel": "Where will the business be located?",
         "spaceOptions": {
@@ -804,7 +804,7 @@
         "invalidLand": "Please enter a valid land size for your business.",
         "analysisFailed": "Failed to generate recommendations. Please try again.",
         "genericError": "An error occurred. Please try again.",
-        "connectionSent": "✅ Connection request sent! The expert will reach out to you within 24 hours.",
+        "connectionSent": " Connection request sent! The expert will reach out to you within 24 hours.",
         "expertNetwork": {
             "title": "Expert Network",
             "connect": "Connect With Agri Experts",

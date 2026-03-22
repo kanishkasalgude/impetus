@@ -31,7 +31,7 @@ const WeatherModal: React.FC<WeatherModalProps> = ({ isOpen, onClose, data, load
                 <div className="bg-white p-6 pb-2 text-[var(--text-primary)] flex justify-between items-start">
                     <div>
                         <h2 className="text-2xl font-bold flex items-center gap-2 text-[var(--color-primary)]">
-                            <span className="text-3xl">☁</span> {location}
+                            <span className="text-3xl"></span> {location}
                         </h2>
                         <p className="text-[var(--text-tertiary)] text-sm font-medium mt-1">{t.weather.liveUpdates}</p>
                     </div>
@@ -67,17 +67,17 @@ const WeatherModal: React.FC<WeatherModalProps> = ({ isOpen, onClose, data, load
                             {/* Grid Stats */}
                             <div className="grid grid-cols-3 gap-2 sm:gap-4">
                                 <div className="bg-[var(--bg-secondary)] p-2 sm:p-4 rounded-2xl border border-[var(--border-color)] flex flex-col items-center text-center hover:border-[var(--color-primary)] transition-colors group">
-                                    <span className="text-xl sm:text-2xl mb-1 sm:mb-2">💧</span>
+                                    <span className="text-xl sm:text-2xl mb-1 sm:mb-2"></span>
                                     <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider group-hover:text-[var(--color-primary)] transition-colors">{t.weather.humidity}</span>
                                     <span className="text-lg font-extrabold text-[var(--text-primary)] mt-1">{data.humidity}%</span>
                                 </div>
                                 <div className="bg-[var(--bg-secondary)] p-2 sm:p-4 rounded-2xl border border-[var(--border-color)] flex flex-col items-center text-center hover:border-[var(--color-primary)] transition-colors group">
-                                    <span className="text-xl sm:text-2xl mb-1 sm:mb-2">💨</span>
+                                    <span className="text-xl sm:text-2xl mb-1 sm:mb-2"></span>
                                     <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider group-hover:text-[var(--color-primary)] transition-colors">{t.weather.wind}</span>
                                     <span className="text-lg font-extrabold text-[var(--text-primary)] mt-1">{data.wind_speed} <span className="text-xs font-bold">km/h</span></span>
                                 </div>
                                 <div className="bg-[var(--bg-secondary)] p-2 sm:p-4 rounded-2xl border border-[var(--border-color)] flex flex-col items-center text-center hover:border-[var(--color-primary)] transition-colors group">
-                                    <span className="text-xl sm:text-2xl mb-1 sm:mb-2">☔</span>
+                                    <span className="text-xl sm:text-2xl mb-1 sm:mb-2"></span>
                                     <span className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider group-hover:text-[var(--color-primary)] transition-colors">{t.weather.rain}</span>
                                     <span className="text-lg font-extrabold text-[var(--text-primary)] mt-1">{data.rainfall_probability}%</span>
                                 </div>

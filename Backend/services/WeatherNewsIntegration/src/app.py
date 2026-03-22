@@ -13,7 +13,7 @@ load_dotenv(dotenv_path)
 
 st.set_page_config(page_title="AgriAI Assistant", layout="wide")
 
-st.title("🌱 Agricultural Intelligence Assistant")
+st.title(" Agricultural Intelligence Assistant")
 st.markdown("Personlized advisory based on **Real-time Weather** and **Agriculture News**.")
 
 # Sidebar Inputs
@@ -66,26 +66,26 @@ if submit_btn:
                 
                 # 1. Priority Badge
                 priority_color = "red" if advisory.get("priority_level") == "HIGH" else "orange" if advisory.get("priority_level") == "MEDIUM" else "green"
-                st.markdown(f"### 🚨 Priority Level: :{priority_color}[{advisory.get('priority_level', 'UNKNOWN')}]")
+                st.markdown(f"###  Priority Level: :{priority_color}[{advisory.get('priority_level', 'UNKNOWN')}]")
                 
                 # 2. Weather Section
-                st.subheader("☁️ Weather Summary")
+                st.subheader(" Weather Summary")
                 st.info(advisory.get("weather_summary", "No weather summary available."))
                 
                 if advisory.get("weather_alerts"):
                     st.error(f"**Alerts:** {', '.join(advisory['weather_alerts'])}")
                 
                 # 3. Personalized Advice
-                st.subheader("💡 Personalized Strategy")
+                st.subheader(" Personalized Strategy")
                 for advice in advisory.get("personalized_advice", []):
                     st.success(f"- {advice}")
                 
-                st.subheader("🚜 Next Actions")
+                st.subheader(" Next Actions")
                 for action in advisory.get("next_actions_for_farmer", []):
-                    st.warning(f"👉 {action}")
+                    st.warning(f" {action}")
 
                 # 4. News Section
-                st.subheader("📰 Relevant News")
+                st.subheader(" Relevant News")
                 news_items = advisory.get("relevant_agri_news", [])
                 if news_items:
                     for news in news_items:

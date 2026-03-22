@@ -378,7 +378,7 @@ const EditProfile: React.FC = () => {
                                                                     : 'bg-white text-gray-600 border-gray-100 hover:border-[#1B5E20] hover:text-[#1B5E20]'
                                                                     }`}
                                                             >
-                                                                {selected ? '✓ ' : ''}{cropLabel}
+                                                                {selected ? ' ' : ''}{cropLabel}
                                                             </button>
                                                         );
                                                     })}

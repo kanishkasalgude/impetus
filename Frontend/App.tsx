@@ -828,7 +828,7 @@ const SignupFlow: React.FC<{ onSignup: (p: UserProfile, password?: string) => vo
                                     : 'bg-white text-gray-600 border-gray-200 hover:border-[#1B5E20] hover:text-[#1B5E20]'
                                     }`}
                                 >
-                                  {selected ? '✓ ' : ''}{cropName}
+                                  {selected ? ' ' : ''}{cropName}
                                 </button>
                               );
                             })}

@@ -1,4 +1,4 @@
-﻿# KrishiSahAI Advisory: Detailed Technical Documentation
+# KrishiSahAI Advisory: Detailed Technical Documentation
 
 This document is the authoritative internal engineering reference for the KrishiSahAI Advisory platform. It covers system architecture, feature-level logic, API specifications, database schemas, AI/ML pipeline internals, security design, performance strategy, and the long-term product roadmap. It is intended for engineers, contributors, technical reviewers, and open-source maintainers.
 

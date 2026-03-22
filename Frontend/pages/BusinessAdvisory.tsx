@@ -476,7 +476,7 @@ const BusinessAdvisory: React.FC = () => {
     };
 
     const renderContent = () => {
-    // ─── STEP 0: LANDING ──────────────────────────────────────────────────────
+    //  STEP 0: LANDING 
     if (step === 0) {
         return (
             <div className="p-4 md:p-8 max-w-7xl mx-auto flex flex-col items-center justify-center min-h-[80vh] gap-4">
@@ -500,7 +500,7 @@ const BusinessAdvisory: React.FC = () => {
         );
     }
 
-    // ─── STEP 1: ASSESSMENT FORM ──────────────────────────────────────────────
+    //  STEP 1: ASSESSMENT FORM 
     if (step === 1) {
         const totalSubSteps = 4;
         const progress = (subStep / totalSubSteps) * 100;
@@ -943,7 +943,7 @@ const BusinessAdvisory: React.FC = () => {
         );
     }
 
-    // ─── STEP 2: RECOMMENDATIONS ──────────────────────────────────────────────
+    //  STEP 2: RECOMMENDATIONS 
     if (step === 2) {
         const knowMoreData = selectedBusiness ? getKnowMoreData(selectedBusiness) : null;
 
@@ -1050,7 +1050,7 @@ const BusinessAdvisory: React.FC = () => {
                     ))}
                 </div>
 
-                {/* ── KNOW MORE MODAL (WasteToValue format) ──────────────────── */}
+                {/*  KNOW MORE MODAL (WasteToValue format)  */}
                 {selectedBusiness && knowMoreData && (
                     <div
                         className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all animate-in fade-in duration-200"
@@ -1149,7 +1149,7 @@ const BusinessAdvisory: React.FC = () => {
                     </div>
                 )}
 
-                {/* ── CONTACT TO EXPERT MODAL ────────────────────────────────── */}
+                {/*  CONTACT TO EXPERT MODAL  */}
                 {showExpertModal && (
                     <div
                         className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all animate-in fade-in duration-200"

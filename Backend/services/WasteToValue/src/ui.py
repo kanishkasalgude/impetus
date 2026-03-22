@@ -31,9 +31,9 @@ except ImportError as e:
 # Each key is a farm profile name; value is a list of crops grown there.
 # In production, this would be fetched from a real database keyed to the user.
 MOCK_PROFILES: dict[str, list[str]] = {
-    "📍 Main Plot":     ["Wheat", "Maize"],
-    "📍 Backyard Shed": ["Onion", "Tomato"],
-    "📍 River Field":   ["Sugarcane", "Rice", "Banana"],
+    " Main Plot":     ["Wheat", "Maize"],
+    " Backyard Shed": ["Onion", "Tomato"],
+    " River Field":   ["Sugarcane", "Rice", "Banana"],
 }
 
 # Ordered list of profile names for the selectbox
@@ -124,46 +124,46 @@ def _render_crop_card(crop_name: str, data: dict) -> None:
     Renders the full analysis card for one crop using native Streamlit elements.
 
     Layout:
-    ┌─────────────────────────────────────────────────┐
-    │ 🌾 Crop Name       Conclusion pill               │
-    │  [metric: avg recovery]  [metric: top option]    │
-    │  ── Waste Options (st.expander per option) ──    │
-    └─────────────────────────────────────────────────┘
+    
+      Crop Name       Conclusion pill               
+      [metric: avg recovery]  [metric: top option]    
+       Waste Options (st.expander per option)     
+    
     """
     options   = data.get("options", [])
     conclusion = data.get("conclusion", {})
 
-    # ── Header row ──────────────────────────────────────────────────────────
+    #  Header row 
     h_col1, h_col2 = st.columns([3, 2])
     with h_col1:
-        st.subheader(f"🌾 {crop_name}")
+        st.subheader(f" {crop_name}")
     with h_col2:
         highlight = conclusion.get("highlight", "—")
-        st.info(f"⭐ **Best Option:** {highlight}", icon=None)
+        st.info(f" **Best Option:** {highlight}", icon=None)
 
-    # ── Conclusion summary ───────────────────────────────────────────────────
+    #  Conclusion summary 
     rationale = conclusion.get("rationale", "")
     if rationale:
-        st.caption(f"📝 {rationale}")
+        st.caption(f" {rationale}")
 
     if not options:
         st.warning("No waste-to-value options were generated for this crop.")
         return
 
-    # ── Quick metric overview (first option for the summary row) ─────────────
+    #  Quick metric overview (first option for the summary row) 
     first_option = options[0]
     first_sections = first_option.get("fullDetails", {}).get("sections", [])
     avg_recovery   = _get_section_value(first_sections, "Average Recovery Value")
     equipment      = _get_section_value(first_sections, "Equipment Needed")
 
     m1, m2, m3 = st.columns(3)
-    m1.metric("💰 Top Recovery Value",  avg_recovery)
-    m2.metric("🔧 Equipment (Top Option)", equipment[:40] + "…" if len(equipment) > 40 else equipment)
-    m3.metric("📦 Total Pathways", len(options))
+    m1.metric(" Top Recovery Value",  avg_recovery)
+    m2.metric(" Equipment (Top Option)", equipment[:40] + "…" if len(equipment) > 40 else equipment)
+    m3.metric(" Total Pathways", len(options))
 
     st.markdown("---")
 
-    # ── Per-option expanders ─────────────────────────────────────────────────
+    #  Per-option expanders 
     for opt in options:
         opt_title    = opt.get("title", "Option")
         opt_subtitle = opt.get("subtitle", "")
@@ -176,7 +176,7 @@ def _render_crop_card(crop_name: str, data: dict) -> None:
         urgency       = _get_section_value(sections, "Action Urgency")
         pathway_type  = _get_section_value(sections, "Pathway Type")
 
-        expander_label = f"♻️ {opt_title}  |  💰 {opt_recovery}  |  ⚡ {urgency}"
+        expander_label = f" {opt_title}  |   {opt_recovery}  |   {urgency}"
         with st.expander(expander_label, expanded=False):
 
             # Subtitle / basic idea
@@ -192,9 +192,9 @@ def _render_crop_card(crop_name: str, data: dict) -> None:
 
             # Key metrics inside the expander
             ec1, ec2, ec3 = st.columns(3)
-            ec1.metric("💰 Avg Recovery Value", opt_recovery)
-            ec2.metric("🔧 Equipment Needed",   opt_equipment[:35] + "…" if len(opt_equipment) > 35 else opt_equipment)
-            ec3.metric("📡 Pathway Type",       pathway_type)
+            ec1.metric(" Avg Recovery Value", opt_recovery)
+            ec2.metric(" Equipment Needed",   opt_equipment[:35] + "…" if len(opt_equipment) > 35 else opt_equipment)
+            ec3.metric(" Pathway Type",       pathway_type)
 
             st.markdown(" ")
 
@@ -220,7 +220,7 @@ def _render_error_card(crop_name: str, error_msg: str) -> None:
         f"**{crop_name}** — Analysis failed.\n\n"
         f"*Reason:* `{error_msg}`\n\n"
         "Please check that Ollama is running and retry.",
-        icon="🚨"
+        icon=""
     )
 
 
@@ -234,21 +234,21 @@ def render_waste_to_value() -> None:
     Flow:
     1. Profile Switcher selectbox (top of section)
     2. Automatic analysis card per crop in the active profile
-    3. Manual 🔍 search bar for ad-hoc / fallback crops
+    3. Manual  search bar for ad-hoc / fallback crops
     """
 
-    # ── Page header ──────────────────────────────────────────────────────────
-    st.header("♻️ Agricultural Waste-to-Value Dashboard")
+    #  Page header 
+    st.header(" Agricultural Waste-to-Value Dashboard")
     st.markdown(
         "_Automatically analyses every crop on your selected farm profile "
         "and surfaces the best waste-monetisation pathways._"
     )
     st.divider()
 
-    # ── 1. PROFILE SWITCHER ──────────────────────────────────────────────────
+    #  1. PROFILE SWITCHER 
     # The selectbox is placed in the sidebar for persistent visibility across tabs.
     with st.sidebar:
-        st.markdown("### 🏡 Farm Profile")
+        st.markdown("###  Farm Profile")
         st.selectbox(
             label="Select Profile",
             options=_PROFILE_NAMES,
@@ -263,18 +263,18 @@ def render_waste_to_value() -> None:
 
     # Display active profile banner
     st.info(
-        f"🏡 **{st.session_state.current_profile}** — "
+        f" **{st.session_state.current_profile}** — "
         f"Showing analysis for: **{', '.join(st.session_state.active_crops)}**",
-        icon="📋",
+        icon="",
     )
     st.markdown(" ")
 
-    # ── 2. MANUAL SEARCH BAR ─────────────────────────────────────────────────
+    #  2. MANUAL SEARCH BAR 
     with st.container():
         search_col, btn_col = st.columns([5, 1])
         with search_col:
             search_crop = st.text_input(
-                "🔍 Search other crops…",
+                " Search other crops…",
                 placeholder="e.g. Banana, Sugarcane, Cotton",
                 key="wtv_search_input",
                 label_visibility="visible",
@@ -295,11 +295,11 @@ def render_waste_to_value() -> None:
 
     st.divider()
 
-    # ── 3. AUTOMATIC ANALYSIS LOOP ───────────────────────────────────────────
+    #  3. AUTOMATIC ANALYSIS LOOP 
     # Each crop in the active profile is analysed automatically.
     # Results are cached so switching profiles doesn't re-run inference.
     for crop in crops_to_render:
-        with st.spinner(f"🌿 Fetching waste pathways for **{crop}**…"):
+        with st.spinner(f" Fetching waste pathways for **{crop}**…"):
             try:
                 data = _fetch_waste_analysis(crop)
 
@@ -553,22 +553,22 @@ def render_business_advisor():
 def main():
     st.set_page_config(
         page_title="KrishiSahAI — Agri-Engine",
-        page_icon="🌾",
+        page_icon="",
         layout="wide",
         initial_sidebar_state="expanded",
     )
 
-    # ── Sidebar chrome ────────────────────────────────────────────────────────
-    st.sidebar.title("🌾 KrishiSahAI")
+    #  Sidebar chrome 
+    st.sidebar.title(" KrishiSahAI")
     st.sidebar.info("Integrated Agricultural Decision Support System")
 
-    if st.sidebar.button("🗑️ Clear All Data"):
+    if st.sidebar.button(" Clear All Data"):
         st.session_state.clear()
         _init_session_state()   # re-seed defaults after clear
         st.rerun()
 
-    # ── Tab navigation ────────────────────────────────────────────────────────
-    tab1, tab2 = st.tabs(["♻️ Waste to Value", "💼 Business Advisor"])
+    #  Tab navigation 
+    tab1, tab2 = st.tabs([" Waste to Value", " Business Advisor"])
 
     with tab1:
         render_waste_to_value()

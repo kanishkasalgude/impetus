@@ -11,7 +11,7 @@ AGRONOMIC & ECONOMIC RULES:
 4. RESILIENCE: Include foliar nutrition tips (e.g., 1% Magnesium Sulphate) to prevent leaf reddening (Lalya).
 5. SIMPLE LANGUAGE: Strictly avoid highly technical agronomic acronyms like "DAS", "DAP", "Basal", "Foliar", etc. Translate them into simple, easy-to-understand language for a common farmer (e.g., instead of "30 DAS", write "30 days after sowing"; instead of "Basal", write "At the time of planting").
 6. UNIQUE ADVANTAGES: The advantages and benefits must be 100% unique directly to the specific {crop_name}. Do NOT use generic statements. Explain exactly why this crop specifically benefits.
-7. STAR THE BEST OPTION: Identify the absolute best/most highly recommended fertilizer option from the list and append a star to its name (e.g., "★ Vermicompost & Urea Base"). Only star ONE option.
+7. STAR THE BEST OPTION: Identify the absolute best/most highly recommended fertilizer option from the list and append a star to its name (e.g., " Vermicompost & Urea Base"). Only star ONE option.
 8. LANGUAGE CONSISTENCY (MANDATORY — Read Every Rule):
 
    a) ABSOLUTE RULE: Generate ALL JSON field values ONLY in the selected language: {language}.
