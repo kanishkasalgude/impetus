@@ -853,7 +853,9 @@ def get_personalized_news(user_id):
         user_doc = None
         user_data = {}
         try:
-            db = firebase_admin.firestore.client()
+            import firebase_admin
+            from firebase_admin import firestore
+            db = firestore.client()
             user_doc = db.collection('users').document(user_id).get()
             
             if user_doc and user_doc.exists:
@@ -874,9 +876,11 @@ def get_personalized_news(user_id):
                 else:
                    location = user_data.get('location') or "India"
             else:
-                print(f"[NEWS] User {user_id} not found in Firestore. Using defaults.")
+                print(f"[NEWS] User {user_id} not found in Firestore. Falling back to general news.")
+                return get_general_news()
         except Exception as db_err:
-            print(f"[NEWS] Firestore Error (Using defaults): {db_err}")
+            print(f"[NEWS] Firestore Error (Falling back to general news): {db_err}")
+            return get_general_news()
             
         print(f"[NEWS] Personalized Intelligence - Fetching for {user_id} (Crops: {crops}, Loc: {location})")
         
@@ -895,11 +899,12 @@ def get_personalized_news(user_id):
         advisory = asyncio.run(agri_agent.generate_advisory(farmer_profile))
         
         if isinstance(advisory, dict) and 'error' in advisory:
-            return jsonify({'success': False, 'error': advisory['error']}), 500
+            print(f"[NEWS] AgriAgent failed. Falling back to general news.")
+            return get_general_news()
         
         # Return the relevant news from the advisory, plus the metadata
         return jsonify({
-            'success': True, 
+            'success': True,
             'news': advisory.get('relevant_agri_news', []),
             'weather_summary': advisory.get('weather_summary'),
             'weather_alerts': advisory.get('weather_alerts'),
@@ -907,10 +912,11 @@ def get_personalized_news(user_id):
             'next_actions': advisory.get('next_actions_for_farmer', [])
         })
     except Exception as e:
-        print(f"[NEWS] Error: {e}")
+        print(f"[NEWS] Unexpected Error: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return get_general_news()
+
 
 @app.route('/api/news/general', methods=['GET', 'OPTIONS'])
 def get_general_news():
