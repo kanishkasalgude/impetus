@@ -7,7 +7,7 @@ from .utils import extract_keywords, construct_news_query, simplify_weather, sim
 class AgriAgent:
     def __init__(self):
         # Load configuration from environment
-        self.ollama_model = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+        self.ollama_model = "llama3.2:1b"
         self.ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
 
         # Initialize new services
@@ -208,21 +208,19 @@ Evaluate information in this strict priority order:
 
         payload = {
             "model": self.ollama_model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
-            ],
+            "prompt": f"System: {system_prompt}\n\nUser: {user_message}",
             "stream": False,
             "format": "json"
         }
 
         try:
-            response = requests.post(f"{self.ollama_host}/api/chat", json=payload)
+            response = requests.post(f"{self.ollama_host}/api/generate", json=payload)
             response.raise_for_status()
             result = response.json()
             
-            content = result.get("message", {}).get("content", "{}")
+            content = result.get("response", "{}")
             return json.loads(content)
+
         except requests.exceptions.ConnectionError:
             print("\n[ERROR] Could not connect to Ollama.")
             print("Please ensure Ollama is running (`ollama serve`) and the model is pulled (`ollama pull llama3.2:1b`).")
