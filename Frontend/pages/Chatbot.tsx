@@ -22,8 +22,11 @@ import {
     Recycle,
     BookOpen,
     Sprout,
-    Wheat
+    Wheat,
+    Download
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { api } from '../src/services/api';
 import { auth, onAuthStateChanged } from '../firebase';
 import { useFarm } from '../src/context/FarmContext';
@@ -78,6 +81,25 @@ const Chatbot: React.FC = () => {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [loadingTipIndex, setLoadingTipIndex] = useState(0);
+
+    const loadingTips = [
+        "Did you know? Soil testing can save 20% on fertilizers.",
+        "Tip: Rotate crops to naturally prevent soil depletion.",
+        "Tip: Use neem oil to naturally repel pests without chemicals.",
+        "Tip: Drip irrigation saves water and reduces weed growth.",
+        "Did you know? CropCycle maps your year to maximize profit."
+    ];
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isLoading) {
+            interval = setInterval(() => {
+                setLoadingTipIndex((prev) => (prev + 1) % loadingTips.length);
+            }, 10000);
+        }
+        return () => clearInterval(interval);
+    }, [isLoading]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -580,7 +602,9 @@ const Chatbot: React.FC = () => {
                 }
             };
 
+            setIsLoading(true);
             await attemptStream();
+            setIsLoading(false);
 
             // Save Assistant Message to Firestore when done
             if (currentChatId && responseText) {
@@ -658,10 +682,7 @@ const Chatbot: React.FC = () => {
                             </button>
                         )}
                         <div className="flex flex-col">
-                            <h2 className="font-bold text-[#1E1E1E] leading-none flex items-center gap-2">
-                                <Bot size={18} className="text-[#1B5E20]" />
-                                KrishiSahAI
-                            </h2>
+                            {/* Removed KrishiSahAI Header Text as requested */}
                         </div>
                     </div>
 
@@ -686,7 +707,7 @@ const Chatbot: React.FC = () => {
                     {/* Welcome / Empty State */}
                     {messages.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center h-full text-center py-12 gap-0">
-                            <img src="/image.png" alt="KrishiSahAI Logo" className="w-64 h-64 md:w-80 md:h-80 object-contain" />
+                            <img src="/image.png" alt="KrishiSahAI Logo" className="w-72 h-72 md:w-96 md:h-96 object-contain" />
                             <div>
                                 <p className="text-stone-500 text-sm">{t.chatbot?.welcomeSub || "Ask me anything about farming, crops, weather, or government schemes."}</p>
                             </div>
@@ -734,50 +755,77 @@ const Chatbot: React.FC = () => {
                                                         <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                                         <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                                     </span>
-                                                    <span className="text-xs text-stone-400">{t.chatbot?.thinking || "Thinking"}...</span>
+                                                    <div className="flex flex-col ml-1">
+                                                        <span className="text-xs text-stone-400 font-bold mb-0.5">{t.chatbot?.thinking || "Thinking"}</span>
+                                                        <span className="text-xs text-[#1B5E20] italic font-medium">{loadingTips[loadingTipIndex]}...</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ) : (
                                             <>
-                                                <ReactMarkdown
-                                                    remarkPlugins={[remarkGfm, remarkBreaks]}
-                                                    components={{
-                                                        code: ({ node, className, children, ...props }) => {
-                                                            const isBlock = className?.includes('language-');
-                                                            return isBlock ? (
-                                                                <pre className="bg-black/10 rounded-lg p-3 my-2 overflow-x-auto text-sm font-mono">
-                                                                    <code className={className} {...props}>{children}</code>
-                                                                </pre>
-                                                            ) : (
-                                                                <code className="bg-black/10 rounded px-1 py-0.5 text-sm font-mono" {...props}>{children}</code>
-                                                            );
-                                                        },
-                                                        strong: ({ node, ...props }) => <span className={`font-bold ${msg.role === 'user' ? 'text-white' : 'text-[#1B5E20]'}`} {...props} />,
-                                                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
-                                                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
-                                                        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                                                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                                        h1: ({ node, ...props }) => <h1 className="text-xl font-bold mt-4 mb-2" {...props} />,
-                                                        h2: ({ node, ...props }) => <h2 className="text-lg font-bold mt-3 mb-2" {...props} />,
-                                                    }}
-                                                >
-                                                    {msg.content || ""}
-                                                </ReactMarkdown>
-                                                {/* TTS Button */}
-                                                {msg.role === 'assistant' && msg.content && (
-                                                    <button
-                                                        onClick={() => handleTextToSpeech(msg.content, i)}
-                                                        disabled={isLoadingTTS === i}
-                                                        className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#1B5E20] bg-[#E8F5E9] hover:bg-[#C8E6C9] border border-[#A5D6A7] px-3 py-1.5 rounded-lg transition-colors"
+                                                <div id={`msg-content-${i}`} className={msg.role === 'user' ? "text-white" : "text-[#002105]"}>
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm, remarkBreaks]}
+                                                        components={{
+                                                            code: ({ node, className, children, ...props }) => {
+                                                                const isBlock = className?.includes('language-');
+                                                                return isBlock ? (
+                                                                    <pre className="bg-black/10 rounded-lg p-3 my-2 overflow-x-auto text-sm font-mono">
+                                                                        <code className={className} {...props}>{children}</code>
+                                                                    </pre>
+                                                                ) : (
+                                                                    <code className="bg-black/10 rounded px-1 py-0.5 text-sm font-mono" {...props}>{children}</code>
+                                                                );
+                                                            },
+                                                            strong: ({ node, ...props }) => <span className={`font-bold ${msg.role === 'user' ? 'text-white' : 'text-[#1B5E20]'}`} {...props} />,
+                                                            ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
+                                                            ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
+                                                            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                                            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                                            h1: ({ node, ...props }) => <h1 className="text-xl font-bold mt-4 mb-2" {...props} />,
+                                                            h2: ({ node, ...props }) => <h2 className="text-lg font-bold mt-3 mb-2" {...props} />,
+                                                        }}
                                                     >
-                                                        {isLoadingTTS === i ? (
-                                                            <span className="animate-pulse">Loading...</span>
-                                                        ) : playingMessageId === i ? (
-                                                            <><Square className="w-4 h-4 fill-current" /> Stop</>
-                                                        ) : (
-                                                            <><Volume2 className="w-4 h-4" /> Listen</>
-                                                        )}
-                                                    </button>
+                                                        {msg.content || ""}
+                                                    </ReactMarkdown>
+                                                </div>
+                                                {/* Action Buttons Container */}
+                                                {msg.role === 'assistant' && msg.content && (
+                                                    <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                                                        {/* TTS Button */}
+                                                        <button
+                                                            onClick={() => handleTextToSpeech(msg.content, i)}
+                                                            disabled={isLoadingTTS === i}
+                                                            className="flex items-center gap-1.5 text-xs font-semibold text-[#1B5E20] bg-[#E8F5E9] hover:bg-[#C8E6C9] border border-[#A5D6A7] px-2.5 py-1.5 rounded-lg transition-colors"
+                                                        >
+                                                            {isLoadingTTS === i ? (
+                                                                <span className="animate-pulse">Loading...</span>
+                                                            ) : playingMessageId === i ? (
+                                                                <><Square className="w-3.5 h-3.5 fill-current" /> Stop</>
+                                                            ) : (
+                                                                <><Volume2 className="w-3.5 h-3.5" /> Listen</>
+                                                            )}
+                                                        </button>
+
+                                                        {/* PDF Export Button */}
+                                                        <button
+                                                            onClick={async () => {
+                                                                const element = document.getElementById(`msg-content-${i}`);
+                                                                if (element) {
+                                                                    const canvas = await html2canvas(element, { scale: 2 });
+                                                                    const imgData = canvas.toDataURL('image/png');
+                                                                    const pdf = new jsPDF('p', 'mm', 'a4');
+                                                                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                                                                    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                                                                    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                                                                    pdf.save(`KrishiSahAI-Response-${i}.pdf`);
+                                                                }
+                                                            }}
+                                                            className="flex items-center gap-1.5 text-xs font-semibold text-[#555555] bg-gray-50 hover:bg-gray-100 border border-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
+                                                        >
+                                                            <Download className="w-3.5 h-3.5" /> Export PDF
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </>
                                         )}

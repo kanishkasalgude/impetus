@@ -5,7 +5,10 @@ import { useLanguage } from '../src/context/LanguageContext';
 import { useFarm } from '../src/context/FarmContext';
 import { api } from '../src/services/api';
 import { auth, db } from '../firebase';
-import { onSnapshot, doc } from 'firebase/firestore';
+import { onSnapshot, doc, collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+import { createPortal } from 'react-dom';
 import {
     Briefcase,
     ArrowRight,
@@ -20,6 +23,7 @@ import {
     Ruler,
     Loader2,
     X,
+    Download,
     Phone,
     MapPin,
     Star,
@@ -159,6 +163,23 @@ const BusinessAdvisory: React.FC = () => {
         }
     ];
 
+    const handleDownloadPDF = async () => {
+        const docElement = document.getElementById('advisory-modal-content');
+        if (!docElement) return;
+
+        try {
+            const canvas = await html2canvas(docElement, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`business_details_${selectedBusiness?.title?.replace(/\s+/g, '_') || 'report'}.pdf`);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+        }
+    };
+
     const getKnowMoreData = (rec: Recommendation) => ({
         title: rec.title,
         matchScore: rec.match_score,
@@ -261,8 +282,32 @@ const BusinessAdvisory: React.FC = () => {
 
     const navigate = useNavigate();
     const location = useLocation();
-    const [step, setStep] = useState<number>(0);
+    const [step, setStep] = useState(0);
     const [subStep, setSubStep] = useState(1);
+    const totalSubSteps = 3;
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [advisoryHistory, setAdvisoryHistory] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (user) {
+            const uid = (user as any).uid || auth.currentUser?.uid;
+            if (!uid) return;
+            const q = query(
+                collection(db, 'users', uid, 'advisory_history'),
+                orderBy('createdAt', 'desc'),
+                limit(20)
+            );
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const fetched = snapshot.docs.map(d => ({
+                    id: d.id,
+                    ...d.data()
+                }));
+                setAdvisoryHistory(fetched);
+            });
+            return () => unsubscribe();
+        }
+    }, [user]);
+
     const [loading, setLoading] = useState(false);
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
 
@@ -271,8 +316,6 @@ const BusinessAdvisory: React.FC = () => {
     const [showExpertModal, setShowExpertModal] = useState(false);
     const [connectingExpert, setConnectingExpert] = useState<number | null>(null);
     const [backendSessionId, setBackendSessionId] = useState<string | null>(null);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
     const [formData, setFormData] = useState<FormData>({
         budget: '',
         currentProfit: '',
@@ -441,6 +484,24 @@ const BusinessAdvisory: React.FC = () => {
             const response = await api.post('/business-advisor/init', payload);
             if (response.success && response.recommendations) {
                 setRecommendations(response.recommendations);
+                
+                if (user) {
+                    try {
+                        const title = `Advisory: ${response.recommendations[0]?.title || 'Assessment'}`;
+                        const uid = (user as any).uid || auth.currentUser?.uid;
+                        if (uid) {
+                            await addDoc(collection(db, 'users', uid, 'advisory_history'), {
+                                title: title,
+                                recommendations: response.recommendations,
+                                formData: payload,
+                                createdAt: new Date()
+                            });
+                        }
+                    } catch (err) {
+                        console.error("Failed to save advisory history:", err);
+                    }
+                }
+
                 if (response.session_id) setBackendSessionId(response.session_id);
                 setStep(2);
             } else {
@@ -479,9 +540,27 @@ const BusinessAdvisory: React.FC = () => {
     //  STEP 0: LANDING 
     if (step === 0) {
         return (
-            <div className="p-4 md:p-8 max-w-7xl mx-auto flex flex-col items-center justify-center min-h-[80vh] gap-4">
-
-                <div className="text-center py-10 md:py-20 px-6 md:px-10 bg-white rounded-[32px] md:rounded-[48px] border border-[#E6E6E6] shadow-xl max-w-3xl w-full">
+            <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-4">
+                <AdvisorySidebar
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    recentAdvisories={advisoryHistory}
+                    onSelectAdvisory={(adv: any) => {
+                        if (adv.recommendations) {
+                            setRecommendations(adv.recommendations);
+                            setStep(2);
+                        }
+                    }}
+                />
+                <div className="w-full max-w-7xl flex justify-start mb-6 -mt-10">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E6E6E6] text-[#1B5E20] font-bold rounded-xl hover:bg-[#F5F5F5] transition-all shadow-sm"
+                    >
+                        <ArrowLeft className="w-4 h-4" /> {t.back || "Back"}
+                    </button>
+                </div>
+                <div className="text-center py-10 md:py-20 px-6 md:px-10 bg-white rounded-[32px] md:rounded-[48px] border border-[#E6E6E6] shadow-xl max-w-3xl w-full mx-auto">
                     <div className="w-16 h-16 md:w-24 md:h-24 bg-[#E8F5E9] rounded-full flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-sm">
                         <Briefcase className="w-8 h-8 md:w-12 md:h-12 text-[#1B5E20]" />
                     </div>
@@ -531,8 +610,23 @@ const BusinessAdvisory: React.FC = () => {
 
         return (
             <div className="p-4 md:p-8 max-w-4xl mx-auto">
+                <AdvisorySidebar
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    recentAdvisories={advisoryHistory}
+                    onSelectAdvisory={(adv: any) => {
+                        if (adv.recommendations) {
+                            setRecommendations(adv.recommendations);
+                            setStep(2);
+                        }
+                    }}
+                />
+                
                 {/* Navigation Header */}
-                <div className="mb-8 flex items-center justify-end">
+                <div className="mb-8 flex items-center justify-between">
+                    <button onClick={handleBack} className="flex items-center gap-2 text-[#555] hover:text-[#1B5E20] transition-colors font-bold text-sm bg-white border border-gray-200 px-4 py-2 rounded-xl shadow-sm w-fit">
+                        <ArrowLeft className="w-4 h-4" /> {t.back || "Back"}
+                    </button>
                     <div className="flex items-center gap-4">
                         <div className="hidden md:block w-48 h-2 bg-[#E6E6E6] rounded-full overflow-hidden">
                             <div
@@ -540,7 +634,7 @@ const BusinessAdvisory: React.FC = () => {
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
-                        <span className="text-sm font-bold text-[#1B5E20]">{t.signupFlow.step || 'Step'} {subStep} {t.signupFlow.of || 'of'} {totalSubSteps}</span>
+                        <span className="text-sm font-bold text-[#1B5E20]">{t.signupFlow?.step || 'Step'} {subStep} {t.signupFlow?.of || 'of'} {totalSubSteps}</span>
                     </div>
                 </div>
 
@@ -949,10 +1043,22 @@ const BusinessAdvisory: React.FC = () => {
 
         return (
             <div className="p-4 md:p-8 max-w-7xl mx-auto">
+                <AdvisorySidebar
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    recentAdvisories={advisoryHistory}
+                    onSelectAdvisory={(adv: any) => {
+                        if (adv.recommendations) {
+                            setRecommendations(adv.recommendations);
+                            setStep(2);
+                        }
+                    }}
+                />
+                
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
-                    <button onClick={() => setStep(1)} className="flex items-center gap-2 text-[#555555] font-bold hover:text-[#1B5E20] transition-colors">
-                        <ArrowLeft className="w-5 h-5" /> {t.back}
+                    <button onClick={() => setStep(1)} className="flex items-center gap-2 text-[#555] hover:text-[#1B5E20] transition-colors font-bold text-sm bg-white border border-gray-200 px-4 py-2 rounded-xl shadow-sm w-fit">
+                        <ArrowLeft className="w-4 h-4" /> {t.back || "Back"}
                     </button>
                     <button onClick={() => setStep(1)} className="text-[#1B5E20] font-bold hover:underline text-sm">
                         {t.retakeAssessment}
@@ -1050,31 +1156,76 @@ const BusinessAdvisory: React.FC = () => {
                     ))}
                 </div>
 
+                {/* Best of 3 Businesses Verdict */}
+                {recommendations.length > 0 && (
+                    <div className="mt-12 bg-[#F8FAFC] border-2 border-[#1B5E20]/20 rounded-[32px] p-8 space-y-6">
+                        <div className="flex items-center gap-3 border-b border-[#E6E6E6] pb-4">
+                            <div className="w-12 h-12 bg-[#E8F5E9] rounded-xl flex items-center justify-center">
+                                <TrendingUp className="text-[#1B5E20] w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-extrabold text-[#1E1E1E]">KrishiSahAI's Top Recommendation</h3>
+                                <p className="text-[#555555] text-sm font-bold">Based on your resources and goals</p>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-white p-6 rounded-2xl border border-[#E6E6E6] shadow-sm flex flex-col md:flex-row gap-6 items-center md:items-start">
+                            <div className="flex-1 space-y-4">
+                                <h4 className="text-xl font-bold text-[#1B5E20]">{recommendations[0]?.title}</h4>
+                                <p className="text-[#555555] text-sm leading-relaxed">
+                                    Among the top three options, <strong>{recommendations[0]?.title}</strong> offers the best balance for your profile. It aligns perfectly with your goals, requiring {recommendations[0]?.estimated_cost} while yielding robust profit potential.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => navigate(`/roadmap/${encodeURIComponent(recommendations[0]?.title)}`, {
+                                    state: {
+                                        businessName: recommendations[0]?.title,
+                                        previousState: { formData, recommendations, step }
+                                    }
+                                })}
+                                className="w-full md:w-auto px-8 py-4 bg-[#1B5E20] text-white rounded-xl font-bold hover:bg-[#000D0F] transition-all shadow-md flex items-center justify-center gap-2 whitespace-nowrap"
+                            >
+                                Generate Roadmap <ArrowRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/*  KNOW MORE MODAL (WasteToValue format)  */}
-                {selectedBusiness && knowMoreData && (
+                {selectedBusiness && knowMoreData && createPortal(
                     <div
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all animate-in fade-in duration-200"
+                        className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/70 backdrop-blur-md transition-all animate-in fade-in duration-200"
                         onClick={() => setSelectedBusiness(null)}
                     >
                         <div
-                            className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[2rem] shadow-2xl border border-[#E6E6E6] overflow-hidden flex flex-col"
+                            className="bg-white w-full h-[100vh] max-w-none rounded-none shadow-2xl overflow-hidden flex flex-col"
                             onClick={e => e.stopPropagation()}
+                            id="advisory-modal-content"
                         >
                             {/* Modal Header */}
-                            <div className="p-6 border-b border-[#E6E6E6] flex justify-between items-center bg-[#1B5E20]">
+                            <div className="p-6 border-b border-[#E6E6E6] flex justify-between items-center bg-[#1B5E20] data-html2canvas-ignore">
                                 <div>
                                     <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">{t.advisory.knowMore.businessDetails}</p>
                                     <h3 className="text-2xl font-extrabold text-white leading-tight">
                                         {knowMoreData.title}
                                     </h3>
                                 </div>
-                                <button
-                                    onClick={() => setSelectedBusiness(null)}
-                                    className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
-                                >
-                                    <X className="w-5 h-5 text-white" />
-                                </button>
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={handleDownloadPDF}
+                                        className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl font-bold transition-colors text-sm"
+                                    >
+                                        <Download className="w-4 h-4" /> Export PDF
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedBusiness(null)}
+                                        className="p-2 bg-white/20 rounded-full hover:bg-white/30 transition-colors"
+                                    >
+                                        <X className="w-5 h-5 text-white" />
+                                    </button>
+                                </div>
                             </div>
+
 
                             {/* Modal Content */}
                             <div className="p-8 overflow-y-auto space-y-8 bg-white">
@@ -1146,7 +1297,7 @@ const BusinessAdvisory: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>, document.body
                 )}
 
                 {/*  CONTACT TO EXPERT MODAL  */}

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../src/context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../src/services/api';
-import { Bug, Upload, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Bug, Upload, MessageCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import DetectionHistorySidebar, { getDetectionHistory, saveDetectionHistory, clearDetectionHistory } from '../components/DetectionHistorySidebar';
+import { useLoadingTips } from '../src/hooks/useLoadingTips';
 
 const PestDetector: React.FC = () => {
     const { t } = useLanguage();
@@ -19,6 +20,7 @@ const PestDetector: React.FC = () => {
     const [pestLoading, setPestLoading] = useState(false);
     const [pestResult, setPestResult] = useState<any | null>(null);
     const [pestError, setPestError] = useState<string | null>(null);
+    const loadingTip = useLoadingTips(pestLoading);
 
     // Listen for toggle-sidebar event
     useEffect(() => {
@@ -153,6 +155,16 @@ const PestDetector: React.FC = () => {
                         >
                             {pestLoading ? t.analyzingBtn : t.detectPest}
                         </button>
+
+                        {pestLoading && (
+                            <div className="bg-[#FFF4E6] p-4 rounded-xl border border-[#D97706]/20 animate-in fade-in zoom-in text-center mt-4">
+                                <div className="flex items-center justify-center gap-2 mb-2">
+                                    <Loader2 className="w-5 h-5 text-[#D97706] animate-spin" />
+                                    <span className="font-bold text-[#D97706]">{t.analyzingBtn}...</span>
+                                </div>
+                                <p className="text-sm font-medium italic text-[#D97706]/80">"{loadingTip}"</p>
+                            </div>
+                        )}
 
                         {pestError && (
                             <div className="p-4 bg-red-50 text-red-600 border border-red-100 font-medium rounded-lg">

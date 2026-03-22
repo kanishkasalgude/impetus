@@ -104,27 +104,15 @@ const Header: React.FC<{
     <header className="fixed top-0 z-[60] w-full bg-[#1B5E20] border-b border-[#2E7D32] shadow-md transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-[64px]">
-          {/* Left: Navigation Icon (Back or Hamburger) */}
+          {/* Left: Navigation Icon (Hamburger everywhere) */}
           <div className="flex items-center gap-1 md:gap-3">
-            {location.pathname !== '/' && (
-              <button
-                onClick={() => navigate(-1)}
-                className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
-                title={t.back || "Back"}
-              >
-                <ArrowLeft size={24} />
-              </button>
-            )}
-            
-            {(location.pathname === '/' || location.pathname === '/chat') && (
-              <button 
-                onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
-                className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors md:hidden"
-                title="Menu"
-              >
-                <Menu size={24} />
-              </button>
-            )}
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
+              className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+              title="Menu"
+            >
+              <Menu size={24} />
+            </button>
           </div>
 
           {/* Center: Feature Navigation (bigger icons + labels) - Shown on feature pages */}
@@ -1064,8 +1052,8 @@ const AppContent: React.FC = () => {
             <Route path="/profile/edit" element={<EditProfile />} />
           </Routes>
 
-          {/* Floating Chatbot Button — hidden on home, chatbot, and waste-to-value pages */}
-          {location.pathname !== '/' && location.pathname !== '/plan' && location.pathname !== '/chat' && location.pathname !== '/waste-to-value' && (
+          {/* Floating Chatbot Button — hidden on chat, home, and plan page */}
+          {location.pathname !== '/chat' && location.pathname !== '/' && location.pathname !== '/plan' && (
             <Link
               to="/chat"
               state={{ newChatWithGreeting: true }}

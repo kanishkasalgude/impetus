@@ -31,6 +31,9 @@ import {
 } from 'lucide-react';
 import { onAuthStateChanged } from '../firebase';
 import { chatService, ChatSession, Message as FirestoreMessage } from '../src/services/chatService';
+import { useLoadingTips } from '../src/hooks/useLoadingTips';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 /* 
   Refactored to have a dedicated Chat View.
@@ -55,6 +58,7 @@ const WasteToValue: React.FC = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [isChatLoading, setIsChatLoading] = useState(false);
+    const loadingTip = useLoadingTips(view === 'processing');
 
     // History & Auth State
     const [user, setUser] = useState<any>(null);
@@ -276,7 +280,7 @@ const WasteToValue: React.FC = () => {
     // --- RENDER VIEW: INPUT ---
     if (view === 'input' || view === 'intro') { // Modified to handle 'intro' and 'input' within this block
         return (
-            <div className="min-h-[calc(100vh-80px)] overflow-hidden flex flex-col md:flex-row max-w-[1600px] mx-auto">
+            <div className="min-h-[calc(100vh-80px)] overflow-hidden flex flex-col md:flex-row max-w-[1600px] mx-auto bg-white">
                 {/* LEFT: Hero/Intro Section (40%) */}
                 <div className={`w-full md:w-[40%] bg-deep-green text-white p-8 md:p-12 flex flex-col justify-between transition-all duration-500 relative overflow-hidden ${view !== 'intro' ? 'hidden md:flex' : 'flex'}`}>
                     {/* Background Pattern */}
@@ -337,16 +341,23 @@ const WasteToValue: React.FC = () => {
                         </div>
                     )}
                     {view === 'input' && (
-                        <div className="flex-1 flex flex-col items-start justify-center p-6 md:p-8">
+                        <div className="flex-1 flex flex-col items-start justify-start p-6 md:p-8 bg-white overflow-y-auto">
+                            <div className="w-full">
+                                <button
+                                    onClick={() => navigate(-1)}
+                                    className="mb-8 flex items-center gap-2 px-4 py-2 text-[#555555] hover:text-[#1B5E20] transition-colors bg-white rounded-xl hover:bg-gray-50 border border-gray-200 shadow-sm w-fit font-bold text-sm"
+                                >
+                                    <ArrowLeft className="w-4 h-4" /> {t.back || "Back"}
+                                </button>
 
-                            <div className="w-full max-w-md mx-auto">
-                                <div className="w-16 h-16 md:w-20 md:h-20 bg-light-green text-deep-green flex items-center justify-center mx-auto mb-6 rounded-full">
-                                    <Leaf className="w-8 h-8 md:w-10 md:h-10" />
-                                </div>
-                                <h2 className="text-xl md:text-2xl font-bold text-deep-green mb-4 uppercase text-center">{t.waste?.manualWasteInput || "Manual Waste Input"}</h2>
-                                <p className="text-gray-600 mb-8 text-center">{t.waste?.describeWaste || "Describe your farm waste to find valuable uses."}</p>
+                                <div className="w-full max-w-xl mx-auto bg-white p-8 md:p-12 rounded-[32px] shadow-xl border border-gray-100">
+                                    <div className="w-16 h-16 md:w-20 md:h-20 bg-light-green text-deep-green flex items-center justify-center mx-auto mb-6 rounded-full shadow-inner">
+                                        <Leaf className="w-8 h-8 md:w-10 md:h-10" />
+                                    </div>
+                                    <h2 className="text-xl md:text-2xl font-black text-deep-green mb-4 uppercase text-center tracking-tight">{t.waste?.manualWasteInput || "Manual Waste Input"}</h2>
+                                    <p className="text-gray-500 mb-8 text-center font-medium">{t.waste?.describeWaste || "Describe your farm waste to find valuable uses."}</p>
 
-                                <form onSubmit={handleAnalyze} className="space-y-6">
+                                    <form onSubmit={handleAnalyze} className="space-y-6">
                                     <div className="relative">
                                         <input
                                             type="text"
@@ -389,6 +400,7 @@ const WasteToValue: React.FC = () => {
                                     </button>
                                 </form>
                             </div>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -399,17 +411,19 @@ const WasteToValue: React.FC = () => {
     // --- RENDER VIEW: PROCESSING ---
     if (view === 'processing') {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center">
-                <div className="relative">
-                    <div className="w-24 h-24 rounded-full border-4 border-[#E6E6E6] border-t-[#1B5E20] animate-spin"></div>
-                    <Recycle className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-[#1B5E20]" />
+            <div className="flex flex-col items-center justify-center min-h-[100vh] px-4 text-center">
+                <div className="relative mb-6">
+                    <div className="w-40 h-40 rounded-full border-4 border-[#E6E6E6] border-t-[#1B5E20] border-r-blue-500 animate-[spin_2s_linear_infinite] shadow-xl"></div>
+                    <Recycle className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 text-[#1B5E20]" />
                 </div>
-                <h2 className="text-3xl font-bold text-[#1E1E1E] mt-8 mb-4">
+                <h2 className="text-3xl font-extrabold text-[#1E1E1E] mt-8 mb-4">
                     {t.analyzingBtn}... {cropInput}
                 </h2>
                 <div className="max-w-md space-y-4 w-full">
-
-                    <p className="text-[#555555] animate-pulse text-sm">{t.identifyingOpportunities}</p>
+                    <p className="text-[#555555] animate-pulse text-sm mb-4">{t.identifyingOpportunities}</p>
+                    <div className="bg-[#E8F5E9] p-4 rounded-xl border border-[#1B5E20]/20 animate-in fade-in zoom-in duration-500">
+                        <p className="text-[#1B5E20] font-bold italic text-sm">"{loadingTip}"</p>
+                    </div>
                 </div>
             </div>
         );
@@ -542,16 +556,15 @@ const WasteToValue: React.FC = () => {
     if (!resultData) return null;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 pt-8 pb-16 px-4">
+        <div className="max-w-7xl mx-auto space-y-8 pt-6 pb-16 px-4">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-2">
+                <div className="flex flex-col gap-4">
                     <button 
                         onClick={() => setView('input')} 
-                        className="text-[#555555] hover:text-[#1B5E20] transition-colors p-2 -ml-2 rounded-full hover:bg-[#E8F5E9]"
-                        title={t.back || "Back"}
+                        className="flex items-center gap-2 px-4 py-2 text-[#555555] hover:text-[#1B5E20] transition-colors bg-white rounded-xl hover:bg-gray-50 border border-gray-200 shadow-sm w-fit font-bold text-sm"
                     >
-                        <ArrowLeft className="w-7 h-7" />
+                        <ArrowLeft className="w-4 h-4" /> {t.back || "Back"}
                     </button>
                     <div>
                         <h1 className="text-2xl md:text-3xl font-extrabold text-[#1E1E1E] flex items-center gap-2">
@@ -561,13 +574,7 @@ const WasteToValue: React.FC = () => {
                     </div>
                 </div>
 
-                <button
-                    onClick={() => setIsHistoryOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-[#1B5E20] text-[#1B5E20] rounded-xl font-bold hover:bg-[#1B5E20] hover:text-white transition-all shadow-sm w-fit active:scale-95"
-                >
-                    <History className="w-5 h-5" />
-                    {t.history || "History"}
-                </button>
+                {/* History button removed as per user request */}
             </div>
 
             {/* SECTION A: Suggestion Cards */}
@@ -630,28 +637,47 @@ const WasteToValue: React.FC = () => {
             {/* Know More Modal */}
             {selectedOption && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all animate-in fade-in duration-200"
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md transition-all animate-in fade-in duration-200"
                     onClick={() => setSelectedOption(null)}
                 >
                     <div
-                        className="bg-white w-full max-w-4xl max-h-[90vh] mx-2 rounded-[2rem] shadow-2xl border border-[#E6E6E6] overflow-hidden flex flex-col"
+                        className="bg-white w-full h-[100vh] max-w-none rounded-none shadow-2xl overflow-hidden flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Modal Header */}
-                        <div className="p-6 border-b border-[#E6E6E6] flex justify-between items-center bg-[#E8F5E9]">
+                        <div className="p-6 border-b border-[#E6E6E6] flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-[#E8F5E9] data-html2canvas-ignore">
                             <h3 className="text-2xl font-bold text-[#1E1E1E] leading-tight">
                                 {selectedOption.title}
                             </h3>
-                            <button
-                                onClick={() => setSelectedOption(null)}
-                                className="p-2 bg-[#E6E6E6] rounded-full hover:bg-gray-300 transition-colors"
-                            >
-                                <X className="w-5 h-5 text-[#555555]" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={async () => {
+                                        const element = document.getElementById('waste-modal-content');
+                                        if (element) {
+                                            const canvas = await html2canvas(element, { scale: 2 });
+                                            const imgData = canvas.toDataURL('image/png');
+                                            const pdf = new jsPDF('p', 'mm', 'a4');
+                                            const pdfWidth = pdf.internal.pageSize.getWidth();
+                                            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                                            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                                            pdf.save(`${selectedOption.title}-Details.pdf`);
+                                        }
+                                    }}
+                                    className="px-4 py-2 bg-[#1B5E20] text-white rounded-lg font-bold text-sm hover:bg-[#000D0F] transition-colors shadow-sm flex items-center gap-2"
+                                >
+                                    <FileText className="w-4 h-4" /> Export PDF
+                                </button>
+                                <button
+                                    onClick={() => setSelectedOption(null)}
+                                    className="p-2 bg-[#E6E6E6] rounded-full hover:bg-gray-300 transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-[#555555]" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Modal Content */}
-                        <div className="p-8 overflow-y-auto space-y-8 custom-scrollbar bg-white">
+                        <div id="waste-modal-content" className="p-8 overflow-y-auto space-y-8 custom-scrollbar bg-white">
                             {/* Basic Idea */}
                             {(selectedOption.fullDetails?.basicIdea?.length > 0) && (
                                 <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
