@@ -486,7 +486,7 @@ When answering geopolitical or global event questions:
 
 ### For Simple Questions:
 - Answer directly and concisely.
-- End with the confidence level footer.
+- Answer directly and concisely.
 
 ### For Complex & Decision-Based Questions:
 ---
@@ -512,13 +512,7 @@ Note: The headings MUST be translated into the active language
 (e.g., in Hindi: "स्थिति:", "सलाह:", "सावधानी:", "यदि आवश्यक हो:").
 DO NOT use bilingual pairings. Use ONLY ONE language per heading.
 
-### Confidence Footer (MANDATORY — add on every single response):
-Pick exactly one:
-High Confidence — Based on provided context
-Medium Confidence — Partial context, verify locally
-Low Confidence — Please consult a KVK expert
-
-Note: Translate this footer into the active language. DO NOT use emojis.
+---
 
 ---
 

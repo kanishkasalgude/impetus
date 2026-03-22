@@ -170,7 +170,15 @@ const EditProfile: React.FC = () => {
     return (
         <div className="min-h-screen p-4 md:p-8 bg-[#F5F9F6]">
             <div className="max-w-4xl mx-auto">
-
+                <div className="mb-6">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-green-100 text-[#1B5E20] font-bold rounded-xl hover:bg-green-50 transition-all shadow-sm group"
+                    >
+                        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                        {t.back || "Back"}
+                    </button>
+                </div>
 
                 <div className="bg-white rounded-[40px] border border-green-100 shadow-xl p-6 md:p-10">
                     <div className="flex items-center gap-6 mb-10 pb-6 border-b border-gray-100">

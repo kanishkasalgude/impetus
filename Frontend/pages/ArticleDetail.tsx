@@ -9,7 +9,7 @@ import remarkBreaks from 'remark-breaks';
 
 const ArticleDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
-    const { language } = useLanguage();
+    const { language, t } = useLanguage();
     const [article, setArticle] = useState<any | null>(null);
     const [galleryImages, setGalleryImages] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -114,7 +114,18 @@ const ArticleDetail: React.FC = () => {
     const fullContent = getContent(article.data.content);
 
     return (
-        <article className="min-h-screen bg-[#FAFAF7] font-serif pb-20 overflow-y-auto">
+        <article className="min-h-screen bg-[#FAFAF7] font-serif pb-20 overflow-y-auto relative">
+            {/* Top Navigation Overlay */}
+            <div className="absolute top-6 left-6 z-50">
+                <Link
+                    to="/hub"
+                    className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md border border-[#E6E6E6] text-green-800 font-bold rounded-full hover:bg-white transition-all shadow-lg group"
+                >
+                    <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                    <span>{t.common.back}</span>
+                </Link>
+            </div>
+
             {/* Hero Image Section */}
             <div className="w-full h-[50vh] md:h-[60vh] relative">
                 <img

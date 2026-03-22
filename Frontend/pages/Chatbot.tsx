@@ -644,9 +644,40 @@ const Chatbot: React.FC = () => {
         <div className="h-[calc(100dvh-64px)] max-w-7xl mx-auto md:p-6 p-0 bg-white">
             {Sidebar}
             <ChatLayout>
-                {/* Messages Container */}
+                {/* Chat Area Header */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-white/50 backdrop-blur-sm sticky top-0 z-20">
+                    <div className="flex items-center gap-3">
+                        {messages.length > 0 && (
+                            <button
+                                onClick={() => setMessages([])}
+                                className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-[#1B5E20] flex items-center gap-2 font-bold text-sm"
+                                title={t.common.back}
+                            >
+                                <ArrowLeft size={18} />
+                                <span className="hidden sm:inline">{t.common.back}</span>
+                            </button>
+                        )}
+                        <div className="flex flex-col">
+                            <h2 className="font-bold text-[#1E1E1E] leading-none flex items-center gap-2">
+                                <Bot size={18} className="text-[#1B5E20]" />
+                                KrishiSahAI
+                            </h2>
+                        </div>
+                    </div>
 
-                {/* Messages Container */}
+                    <div className="flex items-center gap-2">
+                         {messages.length > 0 && (
+                            <button
+                                onClick={() => setMessages([])}
+                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                title={t.chat.newChat}
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                         )}
+                    </div>
+                </div>
+
                 <div
                     ref={chatContainerRef}
                     onScroll={handleScroll}
@@ -674,13 +705,6 @@ const Chatbot: React.FC = () => {
                                     </button>
                                 ))}
                             </div>
-                            {/* Agriculture Fact */}
-                            {currentFact && (
-                                <div className="max-w-md bg-[#F1F8E9] border border-[#C5E1A5] rounded-xl p-4 text-left">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-1">{t.chatbot?.doYouKnow || "Did you know?"} · {currentFact.crop}</p>
-                                    <p className="text-sm text-[#33691E]">{currentFact.fact}</p>
-                                </div>
-                            )}
                         </div>
                     )}
 
@@ -712,12 +736,6 @@ const Chatbot: React.FC = () => {
                                                     </span>
                                                     <span className="text-xs text-stone-400">{t.chatbot?.thinking || "Thinking"}...</span>
                                                 </div>
-                                                {currentFact && (
-                                                    <div className="mt-2 border-t border-gray-100 pt-2">
-                                                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#558B2F] mb-0.5">{t.chatbot?.doYouKnow || "Did you know?"} · {currentFact.crop}</p>
-                                                        <p className="text-xs text-stone-500">{currentFact.fact}</p>
-                                                    </div>
-                                                )}
                                             </div>
                                         ) : (
                                             <>

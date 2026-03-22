@@ -53,6 +53,16 @@ const CropCare: React.FC = () => {
             onClear={handleClearHistory}
         />
         <div className="max-w-6xl mx-auto p-4 md:p-8 pb-32 relative">
+            <div className="mb-6">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E6E6E6] text-[#1B5E20] font-bold rounded-xl hover:bg-gray-50 transition-all shadow-sm group"
+                >
+                    <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                    {t.back || "Back"}
+                </button>
+            </div>
+
             <div className="mb-12 text-center border-b-4 border-deep-green pb-6">
                 <h1 className="text-4xl md:text-5xl font-extrabold text-deep-green tracking-tight mb-4 uppercase">
                     {t.cropCareTitle}

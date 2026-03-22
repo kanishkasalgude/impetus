@@ -68,7 +68,15 @@ const BusinessDetail: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-5xl mx-auto min-h-screen">
-
+            <div className="mb-8">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E6E6E6] text-[#043744] font-bold rounded-xl hover:bg-[#F5F5F5] transition-all shadow-sm group"
+                >
+                    <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                    {t.backToRecs || "Back to Recommendations"}
+                </button>
+            </div>
 
             <div className="bg-white rounded-[40px] border border-[#E6E6E6] shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="bg-[#043744] p-8 md:p-12 text-white relative overflow-hidden">

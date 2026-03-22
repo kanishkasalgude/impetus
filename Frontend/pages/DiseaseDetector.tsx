@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../src/context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../src/services/api';
-import { Sprout, Upload, MessageCircle } from 'lucide-react';
+import { Sprout, Upload, MessageCircle, ArrowLeft } from 'lucide-react';
 import DetectionHistorySidebar, { getDetectionHistory, saveDetectionHistory, clearDetectionHistory } from '../components/DetectionHistorySidebar';
 
 const DiseaseDetector: React.FC = () => {
@@ -106,6 +106,16 @@ const DiseaseDetector: React.FC = () => {
             <div className="relative">
 
             <div className="max-w-4xl mx-auto p-4 md:p-8 pb-32">
+                <div className="mb-6">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E6E6E6] text-deep-green font-bold rounded-xl hover:bg-gray-50 transition-all shadow-sm group"
+                    >
+                        <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                        {t.back || "Back"}
+                    </button>
+                </div>
+
                 <div className="bg-white border-2 border-[#E6E6E6] p-8 hover:border-deep-green transition-all shadow-sm rounded-2xl">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-12 h-12 bg-light-green text-deep-green flex items-center justify-center font-bold rounded-xl">
