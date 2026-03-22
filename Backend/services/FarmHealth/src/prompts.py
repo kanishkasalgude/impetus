@@ -62,9 +62,7 @@ STRICT JSON STRUCTURE:
   ],
   "market_advice": {{
     "timing": "Hold/Buy strategy",
-    "rationale": "Reason based on 2026 subsidy/supply",
-    "confidence_percentage": 90,
-    "confidence_label": "High"
+    "rationale": "Reason based on 2026 subsidy/supply"
   }},
   "insights": [
     "Regional soil health insight",

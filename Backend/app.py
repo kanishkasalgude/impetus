@@ -850,11 +850,13 @@ def get_personalized_news(user_id):
         crops = []
         location = "India"
         
+        user_doc = None
+        user_data = {}
         try:
             db = firebase_admin.firestore.client()
             user_doc = db.collection('users').document(user_id).get()
             
-            if user_doc.exists:
+            if user_doc and user_doc.exists:
                 user_data = user_doc.to_dict()
                 # Frontend uses 'crops_grown' from the UserProfile interface
                 crops = user_data.get('crops_grown') or user_data.get('mainCrops') or user_data.get('crops', [])
@@ -879,7 +881,7 @@ def get_personalized_news(user_id):
         print(f"[NEWS] Personalized Intelligence - Fetching for {user_id} (Crops: {crops}, Loc: {location})")
         
         # Construct farmer profile for AgriAgent
-        farmer_profile = user_data if user_doc.exists else {
+        farmer_profile = user_data if (user_doc and user_doc.exists) else {
             "name": "Farmer",
             "location": {"district": "Unknown", "state": "India"},
             "crops": crops,

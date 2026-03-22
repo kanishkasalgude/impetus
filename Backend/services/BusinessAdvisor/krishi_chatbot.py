@@ -486,7 +486,6 @@ When answering geopolitical or global event questions:
 
 ### For Simple Questions:
 - Answer directly and concisely.
-- Answer directly and concisely.
 
 ### For Complex & Decision-Based Questions:
 ---
