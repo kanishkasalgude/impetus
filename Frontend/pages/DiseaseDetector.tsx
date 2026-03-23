@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../src/context/LanguageContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../src/services/api';
 import { Sprout, Upload, MessageCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import DetectionHistorySidebar, { getDetectionHistory, saveDetectionHistory, clearDetectionHistory } from '../components/DetectionHistorySidebar';
@@ -9,6 +9,16 @@ import { useLoadingTips } from '../src/hooks/useLoadingTips';
 const DiseaseDetector: React.FC = () => {
     const { t } = useLanguage();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Recover from history
+    useEffect(() => {
+        if (location.state?.historyItem) {
+            const item = location.state.historyItem;
+            setDiseaseResult({ disease: item.name, confidence: item.confidence });
+            if (item.preview) setDiseasePreview(item.preview);
+        }
+    }, [location.state]);
 
     // Sidebar State
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);

@@ -4,7 +4,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import { api } from '../src/services/api';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { collection, addDoc, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { ChatMessage } from '../types';
 import { useLanguage } from '../src/context/LanguageContext';
 import { useFarm } from '../src/context/FarmContext';
@@ -30,10 +31,9 @@ import {
     Search as SearchIcon
 } from 'lucide-react';
 import { onAuthStateChanged } from '../firebase';
-import { chatService, ChatSession, Message as FirestoreMessage } from '../src/services/chatService';
+import { chatService } from '../src/services/chatService';
 import { useLoadingTips } from '../src/hooks/useLoadingTips';
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 /* 
   Refactored to have a dedicated Chat View.
@@ -62,7 +62,7 @@ const WasteToValue: React.FC = () => {
 
     // History & Auth State
     const [user, setUser] = useState<any>(null);
-    const [chats, setChats] = useState<ChatSession[]>([]);
+    const [wasteHistory, setWasteHistory] = useState<any[]>([]);
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
@@ -82,36 +82,44 @@ const WasteToValue: React.FC = () => {
         }
     }, [view, resultData, lang]);
 
-    // Auth & Chat History Subscription
+    // Auth & Waste Analysis History Subscription
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
-                // Subscribe to Waste chats only
-                const unsubChats = chatService.subscribeToUserChats(currentUser.uid, (data) => {
-                    setChats(data);
-                }, 'waste');
-                return () => unsubChats();
+                // Subscribe to waste_history collection (analysis results, not chats)
+                const q = query(
+                    collection(db, 'users', currentUser.uid, 'waste_history'),
+                    orderBy('createdAt', 'desc'),
+                    limit(20)
+                );
+                const unsubHistory = onSnapshot(q, (snapshot) => {
+                    const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    setWasteHistory(items);
+                });
+                return () => unsubHistory();
             } else {
                 setUser(null);
-                setChats([]);
+                setWasteHistory([]);
             }
         });
         return () => unsubscribe();
     }, []);
 
-    // Load Messages for Active Chat
-    useEffect(() => {
-        if (user && activeChatId) {
-            chatService.getChatMessages(user.uid, activeChatId).then(msgs => {
-                setMessages(msgs.map(m => ({
-                    role: (m.role === 'assistant' || m.role === 'model') ? 'model' : 'user',
-                    text: m.content
-                })));
-                setView('chat'); // Switch to chat view if we picked a history item
+    // Helper: save analysis result to Firestore
+    const saveWasteHistory = async (crop: string, result: any) => {
+        if (!user) return;
+        try {
+            await addDoc(collection(db, 'users', user.uid, 'waste_history'), {
+                title: `${crop} — Waste Analysis`,
+                crop,
+                result,
+                createdAt: new Date()
             });
+        } catch (err) {
+            console.error('Failed to save waste history:', err);
         }
-    }, [activeChatId, user]);
+    };
 
     // Scroll to bottom of chat
     useEffect(() => {
@@ -147,6 +155,7 @@ const WasteToValue: React.FC = () => {
             if (response.success && response.result) {
                 setResultData(response.result);
                 setView('results');
+                saveWasteHistory(cropInput, response.result);
             } else {
                 throw new Error('Invalid data format');
             }
@@ -172,6 +181,7 @@ const WasteToValue: React.FC = () => {
             if (response.success && response.result) {
                 setResultData(response.result);
                 setView('results');
+                saveWasteHistory(crop, response.result);
             } else {
                 throw new Error('Invalid data format');
             }
@@ -651,17 +661,116 @@ const WasteToValue: React.FC = () => {
                             </h3>
                             <div className="flex items-center gap-2">
                                 <button
-                                    onClick={async () => {
-                                        const element = document.getElementById('waste-modal-content');
-                                        if (element) {
-                                            const canvas = await html2canvas(element, { scale: 2 });
-                                            const imgData = canvas.toDataURL('image/png');
-                                            const pdf = new jsPDF('p', 'mm', 'a4');
-                                            const pdfWidth = pdf.internal.pageSize.getWidth();
-                                            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                                            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                                            pdf.save(`${selectedOption.title}-Details.pdf`);
+                                    onClick={() => {
+                                        const pdf = new jsPDF('p', 'mm', 'a4');
+                                        const pW = pdf.internal.pageSize.getWidth();
+                                        const pH = pdf.internal.pageSize.getHeight();
+                                        const margin = 15;
+                                        let y = 0;
+
+                                        const GREEN: [number, number, number] = [27, 94, 32];
+                                        const LIGHT_GREEN: [number, number, number] = [232, 245, 233];
+                                        const DARK: [number, number, number] = [30, 30, 30];
+                                        const MID: [number, number, number] = [80, 80, 80];
+                                        const GREY: [number, number, number] = [120, 120, 120];
+
+                                        const checkPage = (needed = 8) => {
+                                            if (y + needed > pH - 18) { pdf.addPage(); y = margin; }
+                                        };
+
+                                        const addFooter = () => {
+                                            const total = (pdf as any).internal.getNumberOfPages();
+                                            for (let p = 1; p <= total; p++) {
+                                                pdf.setPage(p);
+                                                pdf.setFontSize(8);
+                                                pdf.setFont('helvetica', 'normal');
+                                                pdf.setTextColor(...GREY);
+                                                pdf.text('Generated by KrishiSahAI — Impetus', margin, pH - 8);
+                                                pdf.text(`Page ${p} of ${total}`, pW - margin, pH - 8, { align: 'right' });
+                                            }
+                                        };
+
+                                        // Replace ₹ with Rs. because jsPDF helvetica doesn't support the Rupee symbol
+                                        const sanitizeText = (text: string): string =>
+                                            text ? String(text).replace(/₹/g, 'Rs.') : '';
+
+                                        const addText = (text: string, size: number, bold = false, color: [number, number, number] = DARK, x = margin) => {
+                                            pdf.setFontSize(size);
+                                            pdf.setFont('helvetica', bold ? 'bold' : 'normal');
+                                            pdf.setTextColor(...color);
+                                            const lines = pdf.splitTextToSize(sanitizeText(text), pW - margin - x);
+                                            lines.forEach((ln: string) => {
+                                                checkPage(size * 0.35 + 2);
+                                                pdf.text(ln, x, y);
+                                                y += size * 0.35 + 1.5;
+                                            });
+                                            y += 1.5;
+                                        };
+
+                                        // ── Header Banner ─────────────────────────────────────
+                                        pdf.setFillColor(...GREEN);
+                                        pdf.rect(0, 0, pW, 30, 'F');
+                                        pdf.setFontSize(18);
+                                        pdf.setFont('helvetica', 'bold');
+                                        pdf.setTextColor(255, 255, 255);
+                                        pdf.text('KrishiSahAI — Waste to Value Analysis', margin, 13);
+                                        pdf.setFontSize(9);
+                                        pdf.setFont('helvetica', 'normal');
+                                        pdf.setTextColor(200, 230, 200);
+                                        pdf.text(new Date().toLocaleString(), margin, 22);
+                                        y = 38;
+
+                                        // ── Crop Title ────────────────────────────────────────
+                                        addText(selectedOption.title, 16, true, GREEN);
+                                        if (selectedOption.subtitle) addText(selectedOption.subtitle, 11, false, MID);
+
+                                        // Divider
+                                        pdf.setDrawColor(...LIGHT_GREEN);
+                                        pdf.setLineWidth(0.5);
+                                        pdf.line(margin, y, pW - margin, y);
+                                        y += 6;
+
+                                        // ── Basic Idea ────────────────────────────────────────
+                                        if (selectedOption.fullDetails?.basicIdea?.length > 0) {
+                                            checkPage(12);
+                                            // Section heading with left accent bar
+                                            pdf.setFillColor(...GREEN);
+                                            pdf.rect(margin, y - 4, 2.5, 7, 'F');
+                                            addText('Basic Idea', 13, true, GREEN, margin + 5);
+                                            selectedOption.fullDetails.basicIdea.forEach((line: string) => {
+                                                checkPage(8);
+                                                addText(`• ${line}`, 10, false, MID, margin + 5);
+                                            });
+                                            y += 4;
                                         }
+
+                                        // ── Sections ──────────────────────────────────────────
+                                        selectedOption.fullDetails?.sections?.forEach((section: any) => {
+                                            checkPage(14);
+                                            // Section heading with left accent bar
+                                            pdf.setFillColor(...GREEN);
+                                            pdf.rect(margin, y - 4, 2.5, 7, 'F');
+                                            addText(section.title, 12, true, GREEN, margin + 5);
+
+                                            // Light background block for content
+                                            const sectionLines: string[] = [];
+                                            section.content?.forEach((item: string) => {
+                                                const wrapped = pdf.splitTextToSize(`• ${item}`, pW - margin * 2 - 10);
+                                                sectionLines.push(...wrapped);
+                                            });
+                                            const blockH = sectionLines.length * 5 + 8;
+                                            checkPage(blockH);
+                                            pdf.setFillColor(...LIGHT_GREEN);
+                                            pdf.roundedRect(margin, y - 2, pW - margin * 2, blockH, 2, 2, 'F');
+
+                                            section.content?.forEach((item: string) => {
+                                                addText(`• ${item}`, 10, false, [40, 80, 40], margin + 5);
+                                            });
+                                            y += 4;
+                                        });
+
+                                        addFooter();
+                                        pdf.save(`KrishiSahAI-WasteAnalysis-${selectedOption.title.replace(/\s+/g, '_')}.pdf`);
                                     }}
                                     className="px-4 py-2 bg-[#1B5E20] text-white rounded-lg font-bold text-sm hover:bg-[#000D0F] transition-colors shadow-sm flex items-center gap-2"
                                 >
@@ -737,30 +846,35 @@ const WasteToValue: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-3 space-y-2" style={{ maxHeight: 'calc(100vh - 80px)' }}>
-                    {chats.length === 0 ? (
+                    {wasteHistory.length === 0 ? (
                         <div className="text-center text-gray-400 py-12">
                             <History size={32} className="mx-auto mb-3 opacity-40" />
                             <p className="text-sm font-medium">{t.sidebar?.noWasteHistory || 'No previous waste analysis found.'}</p>
                             <p className="text-xs mt-1">{t.sidebar?.resultsAppearHere || 'Results will appear here'}</p>
                         </div>
                     ) : (
-                        chats.map((chat) => (
+                        wasteHistory.map((item: any) => (
                             <button
-                                key={chat.id}
+                                key={item.id}
                                 onClick={() => {
-                                    setActiveChatId(chat.id);
+                                    // Restore the analysis result and show results view
+                                    setCropInput(item.crop || '');
+                                    setResultData(item.result);
+                                    setMessages([]);
+                                    setActiveChatId(null);
+                                    setView('results');
                                     setIsHistoryOpen(false);
                                 }}
-                                className={`w-full text-left p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all group ${activeChatId === chat.id ? 'bg-[#E8F5E9] border-[#1B5E20]' : ''}`}
+                                className="w-full text-left p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all group"
                             >
                                 <div className="flex items-center gap-2">
                                     <div className="p-1.5 rounded-lg bg-[#1B5E2015] text-[#1B5E20]">
                                         <Recycle size={16} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-gray-800 truncate">{chat.title}</p>
+                                        <p className="text-sm font-bold text-gray-800 truncate">{item.title}</p>
                                         <p className="text-xs text-gray-400">
-                                            {chat.updatedAt?.toDate ? chat.updatedAt.toDate().toLocaleDateString() : 'Recent'}
+                                            {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString() : 'Recent'}
                                         </p>
                                     </div>
                                 </div>

@@ -91,7 +91,7 @@ const Header: React.FC<{
     return `${weatherData.temperature}°C`;
   };
 
-  const isFeaturePage = location.pathname !== '/' && location.pathname !== '/chat';
+  const isFeaturePage = location.pathname !== '/' && location.pathname !== '/chat' && location.pathname !== '/news';
 
   const quickFeatures = [
     { icon: <Sprout size={22} />, path: '/crop-care', label: t.navCropCare },

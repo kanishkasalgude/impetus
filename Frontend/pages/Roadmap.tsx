@@ -155,7 +155,14 @@ const Roadmap: React.FC = () => {
                 {/* Header Actions */}
                 <div className="flex items-center justify-between mb-8 no-print">
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => {
+                            const prev = location.state?.previousState;
+                            if (prev?.recommendations) {
+                                navigate('/advisory', { state: prev });
+                            } else {
+                                navigate(-1);
+                            }
+                        }}
                         className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E6E6E6] text-[#1B5E20] font-bold rounded-xl hover:bg-[#F5F5F5] transition-all shadow-sm"
                     >
                         <ArrowLeft className="w-5 h-5" /> {t.back || "Back"}
