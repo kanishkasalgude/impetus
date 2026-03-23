@@ -396,6 +396,10 @@ const Chatbot: React.FC = () => {
                 crops_grown: activeFarm?.crops || [], // Ensure farm-specific crops are known
                 farm_name: activeFarm?.nickname,
                 language: (profile?.language || lang).toLowerCase(),
+                // Location Details for Weather API
+                state: activeFarm?.state || profile?.state || '',
+                district: activeFarm?.district || profile?.district || '',
+                village: activeFarm?.village || profile?.village || '',
                 // Pass all farms for broad awareness
                 farms: profile?.farms || [],
                 experience_years: profile?.experience_years || '',

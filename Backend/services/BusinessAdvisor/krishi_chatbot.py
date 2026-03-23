@@ -8,6 +8,7 @@ from typing import Optional, List
 import json
 import re
 import html
+import requests
 
 # --- LANGCHAIN IMPORTS (Refactored for correctness) ---
 from langchain_community.chat_models import ChatOllama
@@ -50,6 +51,62 @@ force_cpu = os.getenv("OLLAMA_FORCE_CPU", "1").lower() not in {"0", "false"}
 if force_cpu and "OLLAMA_NUM_GPU" not in os.environ:
     # Force Ollama to run the model on CPU to avoid CUDA dependency on machines without GPUs
     os.environ["OLLAMA_NUM_GPU"] = "0"
+
+
+# ============================================
+# WEATHER HELPER
+# ============================================
+
+def get_weather_context(location: str) -> str:
+    """
+    Fetch real-time weather for the farmer's location using WeatherAPI.com.
+    Returns a formatted string for injection into the AI context.
+    Gracefully returns an empty string if the API is unavailable.
+    """
+    api_key = os.getenv("WEATHER_API_KEY", "")
+    if not api_key or not location or location.strip().lower() in ("", "unknown", "none"):
+        return ""
+    try:
+        url = "http://api.weatherapi.com/v1/forecast.json"
+        params = {"key": api_key, "q": location, "days": 3, "aqi": "no", "alerts": "yes"}
+        resp = requests.get(url, params=params, timeout=5)
+        resp.raise_for_status()
+        data = resp.json()
+
+        current = data.get("current", {})
+        forecast_days = data.get("forecast", {}).get("forecastday", [])
+        alerts = data.get("alerts", {}).get("alert", [])
+
+        # Build a compact weather summary
+        lines = [
+            "\n[LIVE WEATHER DATA — Use this for personalized advice]",
+            f"Location: {data.get('location', {}).get('name', location)}, {data.get('location', {}).get('region', '')}",
+            f"Current: {current.get('temp_c', 'N/A')}°C, Humidity: {current.get('humidity', 'N/A')}%, Wind: {current.get('wind_kph', 'N/A')} km/h",
+            f"Condition: {current.get('condition', {}).get('text', 'N/A')}",
+        ]
+
+        # 3-day forecast
+        if forecast_days:
+            lines.append("3-Day Forecast:")
+            for day in forecast_days:
+                d = day.get("day", {})
+                date = day.get("date", "")
+                lines.append(
+                    f"  {date}: Max {d.get('maxtemp_c')}°C / Min {d.get('mintemp_c')}°C, "
+                    f"Rain chance: {d.get('daily_chance_of_rain')}%, Condition: {d.get('condition', {}).get('text', 'N/A')}"
+                )
+
+        # Alerts
+        if alerts:
+            lines.append("Weather Alerts:")
+            for alert in alerts[:2]:  # max 2 alerts
+                lines.append(f"  ⚠ {alert.get('headline', alert.get('event', 'Alert'))}")
+
+        lines.append("[Use this weather data to give specific farming advice about irrigation, pest risk, harvesting timing, etc.]")
+        return "\n".join(lines)
+    except Exception as e:
+        print(f"[WEATHER] Could not fetch weather for '{location}': {e}")
+        return ""
 
 
 # ============================================
@@ -113,7 +170,7 @@ class FarmerProfile(BaseModel):
             raise ValueError('Value must be non-negative')
         return v
     
-    def to_context(self) -> str:
+    def to_context(self, cached_weather: Optional[str] = None) -> str:
         """Convert profile to natural language context for AI"""
         lang = self.language.lower()
         interests_str = ", ".join(self.interests) if self.interests else "None"
@@ -175,6 +232,14 @@ Financial Strategy: Risk {self.risk_level}, Goal: {self.main_goal or 'Stability'
 Economic Context: Current Profit: {self.current_profit or '0'}, Recovery Expectation: {self.recovery_timeline or 'Medium term'}
 Interests: {interests_str}, Market Access: {self.market_access}, Preference: {self.selling_preference or 'Wholesale'}
 """
+        # Append live weather data (use cached value if provided, else fetch fresh)
+        if cached_weather is not None:
+            weather = cached_weather
+        else:
+            location = ", ".join(filter(None, [self.village, self.district, self.state])) or "India"
+            weather = get_weather_context(location)
+        if weather:
+            context += weather
         return context
 
 
@@ -191,28 +256,25 @@ You act as a decision-making assistant that helps farmers improve yield, reduce 
 
 ---
 
-## OFF-TOPIC REJECTION (STRICT — HIGHEST PRIORITY RULE)
+## OFF-TOPIC REJECTION (STRICT)
 
-If the user's question is NOT related to:
-- Farming, crops, agriculture, horticulture, or soil
-- Livestock, poultry, dairy, fisheries, or animal husbandry
-- Weather as it affects farming/crops
-- Pest, disease, or weed control for crops
-- Fertilizers, pesticides, or irrigation
-- Market prices, mandis, or selling farm produce
-- Government schemes, subsidies, or loans for farmers
-- Rural livelihoods and agri-business
+You are allowed to answer questions about the following topics ONLY:
+1. Farming, crops, agriculture, horticulture, or soil
+2. Livestock, poultry, dairy, fisheries, or animal husbandry
+3. WEATHER, FORECASTS, TEMPERATURE, RAINFALL, OR CLIMATE (ALWAYS PERMITTED)
+4. Pest, disease, or weed control for crops
+5. Fertilizers, pesticides, or irrigation
+6. Market prices, mandis, or selling farm produce
+7. Government schemes, subsidies, or loans for farmers
 
-Then you MUST respond with ONLY this message (in the selected language):
-"I am KrishiSahAI, your agricultural assistant. I can only help with farming, crops, livestock, soil, weather impact on crops, market prices, and government schemes for farmers. Please ask me a farming-related question."
+If the user asks about ANYTHING ELSE (like politics, movies, human medicine, coding, or general science), politely refuse and explain that you can only help with agriculture, farming, and weather. Do not use canned robotic responses.
 
-DO NOT attempt to answer, guess, or provide any information about:
-- Human biology, health, or medicine
-- General science or education
-- Technology, politics, entertainment, sports
-- Any topic unrelated to agriculture or rural farming
+## WEATHER REPORTING
 
-This rule is ABSOLUTE. No exceptions.
+When the user asks about the weather, temperature, or rain:
+1. NEVER reject the question. You are designed to provide weather updates.
+2. Read the [LIVE WEATHER DATA] provided at the top of your context. This data updates dynamically based on the user's requested city.
+3. Write a neat, natural-sounding paragraph explaining the current weather, temperature, and upcoming forecast to the user. Do "NOT" copy-paste the raw data format directly. Write conversational sentences.
 
 ---
 
@@ -455,6 +517,14 @@ class KrishiSahAIAdvisor:
         self.chat_history: List[BaseMessage] = []
         # Track the last language received from the API/UI toggle
         self.last_api_language = farmer_profile.language.lower()
+        # Fetch weather once at session start and cache it
+        location = ", ".join(filter(None, [
+            farmer_profile.village, farmer_profile.district, farmer_profile.state
+        ])) or "India"
+        self._weather_context = get_weather_context(location)
+        self._last_weather_query = False
+        if self._weather_context:
+            print(f"[WEATHER] Fetched live weather for '{location}'")
         self._initialize_llm()
         self._initialize_chain()
     
@@ -542,9 +612,36 @@ class KrishiSahAIAdvisor:
             else:
                 clean_message = f"(MANDATORY: RESPOND IN ENGLISH ONLY — IGNORE INPUT LANGUAGE) {user_message}"
             
+            # --- DYNAMIC WEATHER INTERCEPTOR ---
+            active_weather = self._weather_context
+            # Check for city mentions regarding weather
+            lower_msg = user_message.lower()
+            city = None
+            if "weather" in lower_msg or "forecast" in lower_msg or "rain" in lower_msg or "temperature" in lower_msg or "about" in lower_msg:
+                match1 = re.search(r'(?:weather|forecast|rain|temperature)\s+(?:in|for|of|at)\s+([a-zA-Z\s]+)', lower_msg)
+                match2 = re.search(r'([a-zA-Z\s]+)\s+(?:weather|forecast)', lower_msg)
+                match3 = re.search(r'what about\s+([a-zA-Z\s]+)', lower_msg) # e.g. "what about solapur?"
+                
+                if match1: city = match1.group(1).strip()
+                elif match2: city = match2.group(1).strip()
+                elif match3: city = match3.group(1).strip()
+                
+                stop_words = ["my area", "here", "my farm", "me", "the", "a", "this", "my", "our", "today", "tomorrow"]
+                if city and len(city) > 2 and city not in stop_words:
+                    print(f"[ADVISOR] Dynamic weather requested for extracted city: {city}")
+                    dynamic_weather = get_weather_context(city)
+                    if dynamic_weather:
+                        active_weather = dynamic_weather
+                        # Remember this query so follow-ups like "what about solapur" work
+                        self._last_weather_query = True
+            
+            if "weather" not in lower_msg and "forecast" not in lower_msg:
+                self._last_weather_query = False
+            # -----------------------------------
+
             # Invoke chain with current history
             chat_history_str = self.get_chat_history()
-            context_str = self.profile.to_context()
+            context_str = self.profile.to_context(cached_weather=active_weather)
             
             response = self.chain.invoke({
                 "chat_history": chat_history_str,
@@ -602,9 +699,36 @@ class KrishiSahAIAdvisor:
             
             full_response = ""
 
+            # --- DYNAMIC WEATHER INTERCEPTOR ---
+            active_weather = self._weather_context
+            # Check for city mentions regarding weather
+            lower_msg = user_message.lower()
+            city = None
+            if "weather" in lower_msg or "forecast" in lower_msg or "rain" in lower_msg or "temperature" in lower_msg or "about" in lower_msg:
+                match1 = re.search(r'(?:weather|forecast|rain|temperature)\s+(?:in|for|of|at)\s+([a-zA-Z\s]+)', lower_msg)
+                match2 = re.search(r'([a-zA-Z\s]+)\s+(?:weather|forecast)', lower_msg)
+                match3 = re.search(r'what about\s+([a-zA-Z\s]+)', lower_msg) # e.g. "what about solapur?"
+                
+                if match1: city = match1.group(1).strip()
+                elif match2: city = match2.group(1).strip()
+                elif match3: city = match3.group(1).strip()
+                
+                stop_words = ["my area", "here", "my farm", "me", "the", "a", "this", "my", "our", "today", "tomorrow"]
+                if city and len(city) > 2 and city not in stop_words:
+                    print(f"[ADVISOR] Dynamic weather requested for extracted city: {city}")
+                    dynamic_weather = get_weather_context(city)
+                    if dynamic_weather:
+                        active_weather = dynamic_weather
+                        # Remember this query so follow-ups like "what about solapur" work
+                        self._last_weather_query = True
+            
+            if "weather" not in lower_msg and "forecast" not in lower_msg:
+                self._last_weather_query = False
+            # -----------------------------------
+
             # Use the .stream() method of the chain
             chat_history_str = self.get_chat_history()
-            context_str = self.profile.to_context()
+            context_str = self.profile.to_context(cached_weather=active_weather)
 
             for chunk in self.chain.stream({
                 "chat_history": chat_history_str,
