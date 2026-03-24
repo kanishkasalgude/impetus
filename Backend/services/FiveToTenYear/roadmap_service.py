@@ -307,10 +307,10 @@ DISCLAIMER: This roadmap is an AI-generated simulation based on provided data an
         year_pattern = r'## (?:Year|वर्ष|Phase) (\d+): (.*?)\n(.*?)(?=## (?:Year|वर्ष|Phase) \d+:|\Z|# [2345])'
         year_blocks = re.findall(year_pattern, text, re.DOTALL | re.IGNORECASE)
         
-        # Labels for inner fields can also be translated
-        focus_labels = r'(?:\*\*Strategic Focus\*\*|\*\*रणनीतिक फोकस\*\*|\*\*धोरणात्मक लक्ष\*\*|\*\*Critical Focus\*\*|\*\*महत्वपूर्ण फोकस\*\*|\*\*गंभीर लक्ष\*\*)'
-        profit_labels = r'(?:\*\*Expected Profit\*\*|\*\*अपेक्षित लाभ\*\*|\*\*अपेक्षित नफा\*\*|\*\*Projected Value/Yield\*\*|\*\*अनुमानित मूल्य/उपज\*\*|\*\*अपेक्षित मूल्य/उत्पन्न\*\*)'
-        actions_labels = r'(?:\*\*Key Actions\*\*|\*\*मुख्य कार्य\*\*|\*\*मुख्य कृती\*\*|\*\*Required Actions\*\*|\*\*आवश्यक कार्य\*\*|\*\*आवश्यक कृती\*\*)'
+        # Labels for inner fields can also be translated (relaxed regex for robust parsing)
+        focus_labels = r'(?:\*?(?:Strategic Focus|रणनीतिक फोकस|धोरणात्मक लक्ष|Critical Focus|महत्वपूर्ण फोकस|गंभीर लक्ष)\*?)'
+        profit_labels = r'(?:\*?(?:Expected Profit|अपेक्षित लाभ|अपेक्षित नफा|Projected Value/Yield|अनुमानित मूल्य/उपज|अपेक्षित मूल्य/उत्पन्न)\*?)'
+        actions_labels = r'(?:\*?(?:Key Actions|मुख्य कार्य|मुख्य कृती|Required Actions|आवश्यक कार्य|आवश्यक कृती)\*?)'
 
         for year_num, goal, content in year_blocks:
             year_data = {
@@ -321,13 +321,13 @@ DISCLAIMER: This roadmap is an AI-generated simulation based on provided data an
                 "profit": ""
             }
             
-            focus_match = re.search(rf'{focus_labels}:\s*(.*)', content, re.IGNORECASE)
+            focus_match = re.search(rf'{focus_labels}\s*:\s*(.*)', content, re.IGNORECASE)
             year_data['focus'] = focus_match.group(1).strip() if focus_match else ""
             
-            profit_match = re.search(rf'{profit_labels}:\s*(.*)', content, re.IGNORECASE)
+            profit_match = re.search(rf'{profit_labels}\s*:\s*(.*)', content, re.IGNORECASE)
             year_data['profit'] = profit_match.group(1).strip() if profit_match else ""
             
-            actions_match = re.search(rf'{actions_labels}:\s*(.*?)(?={profit_labels}|\Z)', content, re.DOTALL | re.IGNORECASE)
+            actions_match = re.search(rf'{actions_labels}\s*:\s*(.*?)(?={profit_labels}|\Z)', content, re.DOTALL | re.IGNORECASE)
             if actions_match:
                 raw_actions = actions_match.group(1).strip()
                 lines = raw_actions.split('\n')

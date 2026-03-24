@@ -25,8 +25,6 @@ load_dotenv()
 # Ensure the Backend directory is in the Python path before local imports
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from services.NotificationService.notification_service import get_demo_notifications
-from services.NotificationService.notification_engine import notification_engine
 from flask_apscheduler import APScheduler
 from werkzeug.utils import secure_filename
 import pandas as pd
@@ -46,24 +44,6 @@ scheduler = APScheduler()
 app.config['SCHEDULER_API_ENABLED'] = True
 scheduler.init_app(app)
 scheduler.start()
-
-# Scheduled Job: Runs every 30 minutes to generate notifications for active users
-@scheduler.task('interval', id='generate_notifications_job', minutes=30)
-def scheduled_notification_generation():
-    with app.app_context():
-        print("[SCHEDULER] Starting scheduled notification generation...")
-        try:
-           db = firebase_admin.firestore.client()
-           users = db.collection('users').limit(20).stream() # Limit for verified performance
-           for user in users:
-               # asyncio.run(notification_engine.generate_notifications_for_user(user.id))
-               # Note: In synchronous Flask context without async loop, we might need a wrapper or run sync
-               # For now, we'll keep it simple or use a helper if needed. 
-               # Since `generate_notifications_for_user` is async, we need a runner.
-               import asyncio
-               asyncio.run(notification_engine.generate_notifications_for_user(user.id))
-        except Exception as e:
-            print(f"[SCHEDULER] Error: {e}")
 
 
 @app.route('/ping')
@@ -1119,40 +1099,7 @@ def get_current_weather():
         print(f"[WEATHER] Error: {e}")
         return jsonify({'error': str(e)}), 500
 
-# --- Notification Routes (Demo) ---
-# --- Notification Routes (NEW) ---
-@app.route('/api/notifications', methods=['GET'])
-@require_auth
-def get_notifications():
-    try:
-        user_id = request.user.get('uid')
-        notifications = notification_engine.get_notifications(user_id)
-        
-        # Fallback to demo if empty (for Hackathon demo purposes if engine hasn't run yet)
-        if not notifications:
-             print(f"[NOTIF] No live notifications for {user_id}, returning demo data.")
-             notifications = get_demo_notifications(user_id)
-             
-        return jsonify({'success': True, 'notifications': notifications})
-    except Exception as e:
-        print(f"[NOTIF] Error: {e}")
-        return jsonify({'error': str(e)}), 500
 
-@app.route('/api/notifications/trigger', methods=['POST'])
-@require_auth
-def trigger_notifications():
-    try:
-        user_id = request.user.get('uid')
-        print(f"[NOTIF] Manual trigger initiated for {user_id}")
-        
-        import asyncio
-        notifications = asyncio.run(notification_engine.generate_notifications_for_user(user_id))
-        
-        print(f"[NOTIF] Trigger success: {len(notifications)} notifications generated for {user_id}")
-        return jsonify({'success': True, 'notifications': notifications, 'count': len(notifications)})
-    except Exception as e:
-        print(f"[NOTIF] Trigger Error: {e}")
-        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':

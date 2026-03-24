@@ -257,6 +257,7 @@ DISCLAIMER: This roadmap is an AI-generated simulation based on provided data an
         profit_labels_re = r'(?:Expected Profit|अपेक्षित लाभ|अपेक्षित नफा|Projected Value/Yield|अनुमानित मूल्य/उपज|अपेक्षित मूल्य/उत्पन्न)'
         actions_labels_re = r'(?:Key Actions|मुख्य कार्य|मुख्य कृती|Required Actions|आवश्यक कार्य|आवश्यक कृती)'
 
+        phase_map = {}
         for year_num, goal, content in year_blocks:
             year_data = {
                 "year": f"Phase {year_num}",
@@ -279,7 +280,15 @@ DISCLAIMER: This roadmap is an AI-generated simulation based on provided data an
                 # Remove starting hyphen, asterisk, numbers or dots
                 year_data['actions'] = [re.sub(r'^[-*\d.]+\s*', '', l).strip() for l in lines if l.strip() and not l.strip().startswith('**')]
 
-            roadmap['years'].append(year_data)
+            # Deduplication: LLM sometimes generates phase headings twice (e.g. outline then details). Keep the one with most actions.
+            if year_num in phase_map:
+                if len(year_data['actions']) > len(phase_map[year_num]['actions']):
+                    phase_map[year_num] = year_data
+            else:
+                phase_map[year_num] = year_data
+
+        # Sort strictly by phase number
+        roadmap['years'] = [phase_map[k] for k in sorted(phase_map.keys(), key=lambda x: int(x))]
 
         if not roadmap['years']:
             print("[ROADMAP WARNING] Regex year/phase extraction failed. Possible format mismatch.")

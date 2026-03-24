@@ -27,7 +27,6 @@ import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { FarmProvider, useFarm } from './src/context/FarmContext';
 import logo from './src/assets/logo.png';
 import WeatherModal from './components/WeatherModal';
-import NotificationBell from './components/NotificationBell';
 import { normalizeValue, getLocalizedValue } from './src/utils/localizationUtils';
 import en from './src/locales/en.json';
 
@@ -49,7 +48,6 @@ const getDisplayLocation = (farm: Farm | null, lang: string) => {
 
 const Header: React.FC<{
 
-  toggleNotifications: () => void;
   toggleWeather: () => void;
   user: UserProfile | null;
   logout: () => void;
@@ -57,7 +55,7 @@ const Header: React.FC<{
   weatherLoading?: boolean;
   refreshWeather: () => void;
   onAuthSwitch: (view: 'login' | 'signup') => void;
-}> = ({ toggleNotifications, toggleWeather, user, logout, weatherData, weatherLoading, refreshWeather, onAuthSwitch }) => {
+}> = ({ toggleWeather, user, logout, weatherData, weatherLoading, refreshWeather, onAuthSwitch }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
@@ -106,7 +104,7 @@ const Header: React.FC<{
         <div className="flex items-center justify-between h-[64px]">
           {/* Left: Navigation Icon (Hamburger everywhere) */}
           <div className="flex items-center gap-1 md:gap-3">
-            <button 
+            <button
               onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))}
               className="p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
               title="Menu"
@@ -123,11 +121,10 @@ const Header: React.FC<{
                   key={f.path}
                   to={f.path}
                   title={f.label}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all active:scale-95 ${
-                    (f.path === '/' ? location.pathname === '/' : location.pathname.startsWith(f.path))
-                      ? 'bg-white text-[#1B5E20] shadow-lg' 
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all active:scale-95 ${(f.path === '/' ? location.pathname === '/' : location.pathname.startsWith(f.path))
+                      ? 'bg-white text-[#1B5E20] shadow-lg'
                       : 'text-white/70 hover:text-white hover:bg-white/10'
-                  }`}
+                    }`}
                 >
                   {f.icon}
                   <span className="hidden sm:inline">{f.label}</span>
@@ -155,23 +152,27 @@ const Header: React.FC<{
           <div className="flex items-center gap-2 md:gap-4 relative z-50">
             {user && !isFeaturePage && (
               <div className="flex items-center gap-3 md:gap-6 mr-2">
-                <Link 
-                  to="/news" 
+                <Link
+                  to="/news"
                   className="relative flex items-center justify-center w-12 h-12 bg-[#FAFAF7] border border-[#E6E6E6] rounded-full hover:bg-[#E8F5E9] transition-all shadow-sm group"
                   title={t.navNews || "News"}
                 >
-                   <Newspaper size={22} className="text-[#043744] group-hover:scale-110 transition-transform" />
+                  <Newspaper size={22} className="text-[#043744] group-hover:scale-110 transition-transform" />
                 </Link>
-                <button 
-                  onClick={toggleWeather} 
+                <button
+                  onClick={toggleWeather}
                   className="relative flex items-center justify-center w-12 h-12 bg-[#FAFAF7] border border-[#E6E6E6] rounded-full hover:bg-[#E8F5E9] transition-all shadow-sm group"
                   title={(t as any).navWeather || "Weather"}
                 >
-                   <Cloud size={22} className="text-[#043744] group-hover:scale-110 transition-transform" />
+                  <Cloud size={22} className="text-[#043744] group-hover:scale-110 transition-transform" />
                 </button>
-                <div className="flex items-center justify-center">
-                  <NotificationBell />
-                </div>
+                <Link
+                  to="/hub"
+                  className="relative flex items-center justify-center w-12 h-12 bg-[#FAFAF7] border border-[#E6E6E6] rounded-full hover:bg-[#E8F5E9] transition-all shadow-sm group"
+                  title={t.navHub || "Knowledge Hub"}
+                >
+                  <BookOpen size={22} className="text-[#043744] group-hover:scale-110 transition-transform" />
+                </Link>
               </div>
             )}
             {user ? (
@@ -213,9 +214,9 @@ const Header: React.FC<{
                   </div>
 
                   {isFeaturePage && (
-                      <div className="flex items-center w-full px-5 py-2 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
-                        <NotificationBell />
-                      </div>
+                    <Link to="/hub" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
+                      <BookOpen size={16} /> {t.navHub || "Knowledge Hub"}
+                    </Link>
                   )}
                   <Link to="/" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
                     <Layout size={16} /> {t.navHome || "Home"}
@@ -230,9 +231,6 @@ const Header: React.FC<{
                       </button>
                     </>
                   )}
-                  <Link to="/hub" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
-                    <BookOpen size={16} /> {t.navHub || "Knowledge Hub"}
-                  </Link>
                   <Link to="/profile/edit" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 w-full px-5 py-4 text-sm font-bold text-[#1B5E20] hover:bg-green-50 transition-colors border-b border-gray-100">
                     <Settings size={16} /> {t.editProfile}
                   </Link>
@@ -1013,7 +1011,6 @@ const AppContent: React.FC = () => {
         <div className={`min-h-[100dvh] pt-[68px] ${location.pathname === '/' || location.pathname === '/chat' ? 'bg-white' : ''}`}>
           {/* Updated Header with refresh and loading props */}
           <Header
-            toggleNotifications={() => { }}
             toggleWeather={handleToggleWeather}
             user={user}
             logout={handleLogout}

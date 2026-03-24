@@ -185,16 +185,6 @@ export const api = {
         return res.json();
     },
 
-    getNotifications: async () => {
-        try {
-            const headers = await getHeaders();
-            const res = await fetch(`${BASE_URL}/notifications`, { headers });
-            if (!res.ok) return { success: false, notifications: [] };
-            return res.json();
-        } catch {
-            return { success: false, notifications: [] };
-        }
-    },
 
     getMandiPrices: async (crop: string, district: string) => {
         const headers = await getHeaders();
