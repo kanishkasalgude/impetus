@@ -12,7 +12,7 @@
     "@google/genai": "^1.40.0",
     "firebase": "^12.9.0",
     "html2canvas": "^1.4.1",
-    "jspdf": "^4.1.0",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",

@@ -22,8 +22,10 @@ import {
     Recycle,
     BookOpen,
     Sprout,
-    Wheat
+    Wheat,
+    Download
 } from 'lucide-react';
+import jsPDF from 'jspdf';
 import { api } from '../src/services/api';
 import { auth, onAuthStateChanged } from '../firebase';
 import { useFarm } from '../src/context/FarmContext';
@@ -78,6 +80,25 @@ const Chatbot: React.FC = () => {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [loadingTipIndex, setLoadingTipIndex] = useState(0);
+
+    const loadingTips = [
+        "Did you know? Soil testing can save 20% on fertilizers.",
+        "Tip: Rotate crops to naturally prevent soil depletion.",
+        "Tip: Use neem oil to naturally repel pests without chemicals.",
+        "Tip: Drip irrigation saves water and reduces weed growth.",
+        "Did you know? CropCycle maps your year to maximize profit."
+    ];
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isLoading) {
+            interval = setInterval(() => {
+                setLoadingTipIndex((prev) => (prev + 1) % loadingTips.length);
+            }, 10000);
+        }
+        return () => clearInterval(interval);
+    }, [isLoading]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -375,6 +396,10 @@ const Chatbot: React.FC = () => {
                 crops_grown: activeFarm?.crops || [], // Ensure farm-specific crops are known
                 farm_name: activeFarm?.nickname,
                 language: (profile?.language || lang).toLowerCase(),
+                // Location Details for Weather API
+                state: activeFarm?.state || profile?.state || '',
+                district: activeFarm?.district || profile?.district || '',
+                village: activeFarm?.village || profile?.village || '',
                 // Pass all farms for broad awareness
                 farms: profile?.farms || [],
                 experience_years: profile?.experience_years || '',
@@ -580,7 +605,9 @@ const Chatbot: React.FC = () => {
                 }
             };
 
+            setIsLoading(true);
             await attemptStream();
+            setIsLoading(false);
 
             // Save Assistant Message to Firestore when done
             if (currentChatId && responseText) {
@@ -658,10 +685,7 @@ const Chatbot: React.FC = () => {
                             </button>
                         )}
                         <div className="flex flex-col">
-                            <h2 className="font-bold text-[#1E1E1E] leading-none flex items-center gap-2">
-                                <Bot size={18} className="text-[#1B5E20]" />
-                                KrishiSahAI
-                            </h2>
+                            {/* Removed KrishiSahAI Header Text as requested */}
                         </div>
                     </div>
 
@@ -686,7 +710,7 @@ const Chatbot: React.FC = () => {
                     {/* Welcome / Empty State */}
                     {messages.length === 0 && !isLoading && (
                         <div className="flex flex-col items-center justify-center h-full text-center py-12 gap-0">
-                            <img src="/image.png" alt="KrishiSahAI Logo" className="w-64 h-64 md:w-80 md:h-80 object-contain" />
+                            <img src="/image.png" alt="KrishiSahAI Logo" className="w-72 h-72 md:w-96 md:h-96 object-contain" />
                             <div>
                                 <p className="text-stone-500 text-sm">{t.chatbot?.welcomeSub || "Ask me anything about farming, crops, weather, or government schemes."}</p>
                             </div>
@@ -734,50 +758,184 @@ const Chatbot: React.FC = () => {
                                                         <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                                                         <span className="w-2 h-2 bg-[#1B5E20]/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                                     </span>
-                                                    <span className="text-xs text-stone-400">{t.chatbot?.thinking || "Thinking"}...</span>
+                                                    <div className="flex flex-col ml-1">
+                                                        <span className="text-xs text-stone-400 font-bold mb-0.5">{t.chatbot?.thinking || "Thinking"}</span>
+                                                        <span className="text-xs text-[#1B5E20] italic font-medium">{loadingTips[loadingTipIndex]}...</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ) : (
                                             <>
-                                                <ReactMarkdown
-                                                    remarkPlugins={[remarkGfm, remarkBreaks]}
-                                                    components={{
-                                                        code: ({ node, className, children, ...props }) => {
-                                                            const isBlock = className?.includes('language-');
-                                                            return isBlock ? (
-                                                                <pre className="bg-black/10 rounded-lg p-3 my-2 overflow-x-auto text-sm font-mono">
-                                                                    <code className={className} {...props}>{children}</code>
-                                                                </pre>
-                                                            ) : (
-                                                                <code className="bg-black/10 rounded px-1 py-0.5 text-sm font-mono" {...props}>{children}</code>
-                                                            );
-                                                        },
-                                                        strong: ({ node, ...props }) => <span className={`font-bold ${msg.role === 'user' ? 'text-white' : 'text-[#1B5E20]'}`} {...props} />,
-                                                        ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
-                                                        ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
-                                                        li: ({ node, ...props }) => <li className="mb-1" {...props} />,
-                                                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
-                                                        h1: ({ node, ...props }) => <h1 className="text-xl font-bold mt-4 mb-2" {...props} />,
-                                                        h2: ({ node, ...props }) => <h2 className="text-lg font-bold mt-3 mb-2" {...props} />,
-                                                    }}
-                                                >
-                                                    {msg.content || ""}
-                                                </ReactMarkdown>
-                                                {/* TTS Button */}
-                                                {msg.role === 'assistant' && msg.content && (
-                                                    <button
-                                                        onClick={() => handleTextToSpeech(msg.content, i)}
-                                                        disabled={isLoadingTTS === i}
-                                                        className="mt-3 flex items-center gap-2 text-xs font-semibold text-[#1B5E20] bg-[#E8F5E9] hover:bg-[#C8E6C9] border border-[#A5D6A7] px-3 py-1.5 rounded-lg transition-colors"
+                                                <div id={`msg-content-${i}`} className={msg.role === 'user' ? "text-white" : "text-[#002105]"}>
+                                                    <ReactMarkdown
+                                                        remarkPlugins={[remarkGfm, remarkBreaks]}
+                                                        components={{
+                                                            code: ({ node, className, children, ...props }) => {
+                                                                const isBlock = className?.includes('language-');
+                                                                return isBlock ? (
+                                                                    <pre className="bg-black/10 rounded-lg p-3 my-2 overflow-x-auto text-sm font-mono">
+                                                                        <code className={className} {...props}>{children}</code>
+                                                                    </pre>
+                                                                ) : (
+                                                                    <code className="bg-black/10 rounded px-1 py-0.5 text-sm font-mono" {...props}>{children}</code>
+                                                                );
+                                                            },
+                                                            strong: ({ node, ...props }) => <span className={`font-bold ${msg.role === 'user' ? 'text-white' : 'text-[#1B5E20]'}`} {...props} />,
+                                                            ul: ({ node, ...props }) => <ul className="list-disc pl-5 my-2 space-y-1" {...props} />,
+                                                            ol: ({ node, ...props }) => <ol className="list-decimal pl-5 my-2 space-y-1" {...props} />,
+                                                            li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                                            p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                                                            h1: ({ node, ...props }) => <h1 className="text-xl font-bold mt-4 mb-2" {...props} />,
+                                                            h2: ({ node, ...props }) => <h2 className="text-lg font-bold mt-3 mb-2" {...props} />,
+                                                        }}
                                                     >
-                                                        {isLoadingTTS === i ? (
-                                                            <span className="animate-pulse">Loading...</span>
-                                                        ) : playingMessageId === i ? (
-                                                            <><Square className="w-4 h-4 fill-current" /> Stop</>
-                                                        ) : (
-                                                            <><Volume2 className="w-4 h-4" /> Listen</>
-                                                        )}
-                                                    </button>
+                                                        {msg.content || ""}
+                                                    </ReactMarkdown>
+                                                </div>
+                                                {/* Action Buttons Container */}
+                                                {msg.role === 'assistant' && msg.content && (
+                                                    <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+                                                        {/* TTS Button */}
+                                                        <button
+                                                            onClick={() => handleTextToSpeech(msg.content, i)}
+                                                            disabled={isLoadingTTS === i}
+                                                            className="flex items-center gap-1.5 text-xs font-semibold text-[#1B5E20] bg-[#E8F5E9] hover:bg-[#C8E6C9] border border-[#A5D6A7] px-2.5 py-1.5 rounded-lg transition-colors"
+                                                        >
+                                                            {isLoadingTTS === i ? (
+                                                                <span className="animate-pulse">Loading...</span>
+                                                            ) : playingMessageId === i ? (
+                                                                <><Square className="w-3.5 h-3.5 fill-current" /> Stop</>
+                                                            ) : (
+                                                                <><Volume2 className="w-3.5 h-3.5" /> Listen</>
+                                                            )}
+                                                        </button>                                                         {/* PDF Export Button - exports full conversation */}
+                                                        <button
+                                                            onClick={() => {
+                                                                const pdf = new jsPDF('p', 'mm', 'a4');
+                                                                const pW = pdf.internal.pageSize.getWidth();
+                                                                const pH = pdf.internal.pageSize.getHeight();
+                                                                const margin = 15;
+                                                                let y = 0;
+
+                                                                const GREEN: [number, number, number] = [27, 94, 32];
+                                                                const LIGHT_GREEN: [number, number, number] = [232, 245, 233];
+                                                                const DARK_TEXT: [number, number, number] = [30, 30, 30];
+                                                                const GREY: [number, number, number] = [120, 120, 120];
+
+                                                                const addFooter = () => {
+                                                                    const total = (pdf as any).internal.getNumberOfPages();
+                                                                    for (let p = 1; p <= total; p++) {
+                                                                        pdf.setPage(p);
+                                                                        pdf.setFontSize(8);
+                                                                        pdf.setFont('helvetica', 'normal');
+                                                                        pdf.setTextColor(...GREY);
+                                                                        pdf.text('Generated by KrishiSahAI — Impetus', margin, pH - 8);
+                                                                        pdf.text(`Page ${p} of ${total}`, pW - margin, pH - 8, { align: 'right' });
+                                                                    }
+                                                                };
+
+                                                                const checkPage = (needed = 8) => {
+                                                                    if (y + needed > pH - 18) { pdf.addPage(); y = margin; }
+                                                                };
+
+                                                                const addLine = (text: string, size: number, bold = false, color: [number, number, number] = DARK_TEXT, x = margin) => {
+                                                                    pdf.setFontSize(size);
+                                                                    pdf.setFont('helvetica', bold ? 'bold' : 'normal');
+                                                                    pdf.setTextColor(...color);
+                                                                    const lines = pdf.splitTextToSize(text || '', pW - margin - x);
+                                                                    lines.forEach((ln: string) => {
+                                                                        checkPage(size * 0.35 + 2);
+                                                                        pdf.text(ln, x, y);
+                                                                        y += size * 0.35 + 1.5;
+                                                                    });
+                                                                    y += 1.5;
+                                                                };
+
+                                                                const stripMd = (text: string) =>
+                                                                    text
+                                                                        .replace(/#{1,6}\s/g, '')
+                                                                        .replace(/\*\*(.*?)\*\*/g, '$1')
+                                                                        .replace(/\*(.*?)\*/g, '$1')
+                                                                        .replace(/`(.*?)`/g, '$1')
+                                                                        .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+                                                                        .replace(/^\s*[-*+]\s/gm, '• ')
+                                                                        .replace(/^\s*\d+\.\s/gm, '')
+                                                                        .trim();
+
+                                                                // ── Header Banner ──────────────────────────────────
+                                                                pdf.setFillColor(...GREEN);
+                                                                pdf.rect(0, 0, pW, 30, 'F');
+                                                                pdf.setFontSize(18);
+                                                                pdf.setFont('helvetica', 'bold');
+                                                                pdf.setTextColor(255, 255, 255);
+                                                                pdf.text('KrishiSahAI — Chat Export', margin, 13);
+                                                                pdf.setFontSize(9);
+                                                                pdf.setFont('helvetica', 'normal');
+                                                                pdf.setTextColor(200, 230, 200);
+                                                                pdf.text(new Date().toLocaleString(), margin, 22);
+                                                                y = 38;
+
+                                                                // ── Divider ─────────────────────────────────────────
+                                                                pdf.setDrawColor(...LIGHT_GREEN);
+                                                                pdf.setLineWidth(0.5);
+                                                                pdf.line(margin, y, pW - margin, y);
+                                                                y += 6;
+
+                                                                // ── Messages ────────────────────────────────────────
+                                                                messages.forEach((m) => {
+                                                                    if (m.role === 'user') {
+                                                                        checkPage(16);
+                                                                        // User label pill background
+                                                                        pdf.setFillColor(...GREEN);
+                                                                        pdf.roundedRect(margin, y - 4, 18, 6, 1, 1, 'F');
+                                                                        pdf.setFontSize(8);
+                                                                        pdf.setFont('helvetica', 'bold');
+                                                                        pdf.setTextColor(255, 255, 255);
+                                                                        pdf.text('YOU', margin + 2, y);
+                                                                        y += 5;
+                                                                        // Message content on light grey background
+                                                                        const userLines = pdf.splitTextToSize(m.content || '', pW - margin * 2 - 4);
+                                                                        const boxH = userLines.length * 5.5 + 6;
+                                                                        checkPage(boxH + 4);
+                                                                        pdf.setFillColor(245, 245, 245);
+                                                                        pdf.roundedRect(margin, y - 2, pW - margin * 2, boxH, 2, 2, 'F');
+                                                                        addLine(m.content || '', 10, false, DARK_TEXT, margin + 3);
+                                                                    } else if (m.role === 'assistant' && m.content) {
+                                                                        checkPage(16);
+                                                                        // AI label pill background
+                                                                        pdf.setFillColor(...LIGHT_GREEN);
+                                                                        pdf.roundedRect(margin, y - 4, 28, 6, 1, 1, 'F');
+                                                                        pdf.setFontSize(8);
+                                                                        pdf.setFont('helvetica', 'bold');
+                                                                        pdf.setTextColor(...GREEN);
+                                                                        pdf.text('KRISHISAHAI', margin + 2, y);
+                                                                        y += 5;
+                                                                        // AI message on light green background
+                                                                        const aiText = stripMd(m.content);
+                                                                        const aiLines = pdf.splitTextToSize(aiText, pW - margin * 2 - 4);
+                                                                        const aiBoxH = aiLines.length * 5.5 + 6;
+                                                                        checkPage(aiBoxH + 4);
+                                                                        pdf.setFillColor(...LIGHT_GREEN);
+                                                                        pdf.roundedRect(margin, y - 2, pW - margin * 2, aiBoxH, 2, 2, 'F');
+                                                                        addLine(aiText, 10, false, [40, 80, 40], margin + 3);
+                                                                    }
+                                                                    // Separator
+                                                                    checkPage(6);
+                                                                    pdf.setDrawColor(220, 240, 220);
+                                                                    pdf.setLineWidth(0.3);
+                                                                    pdf.line(margin, y + 1, pW - margin, y + 1);
+                                                                    y += 6;
+                                                                });
+
+                                                                addFooter();
+                                                                const date = new Date().toISOString().split('T')[0];
+                                                                pdf.save(`KrishiSahAI-Chat-${date}.pdf`);
+                                                            }}
+                                                            className="flex items-center gap-1.5 text-xs font-semibold text-[#555555] bg-gray-50 hover:bg-gray-100 border border-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
+                                                        >
+                                                            <Download className="w-3.5 h-3.5" /> Export Chat PDF
+                                                        </button>
+                                                    </div>
                                                 )}
                                             </>
                                         )}

@@ -1,0 +1,104 @@
+﻿
+> krishisahai-prototype@0.0.0 build
+> vite build
+
+[36mvite v6.4.1 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 2308 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mregisterSW.js                                                      [39m[1m[2m    0.14 kB[22m[1m[22m
+[2mdist/[22m[32mmanifest.webmanifest                                               [39m[1m[2m    0.45 kB[22m[1m[22m
+[2mdist/[22m[32mindex.html                                                         [39m[1m[2m    1.66 kB[22m[1m[22m[2m Γöé gzip:   0.77 kB[22m
+[2mdist/[22m[32massets/171455-17965791-BelJ4XSW.jpg                                [39m[1m[2m   42.00 kB[22m[1m[22m
+[2mdist/[22m[32massets/Screenshot_20211227-235317-500x515-B343Itke.jpg             [39m[1m[2m   63.86 kB[22m[1m[22m
+[2mdist/[22m[32massets/logo-DOYliPOL.png                                           [39m[1m[2m   97.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/Mango-Flaoter-3-zCwprkJl.png                                [39m[1m[2m  102.59 kB[22m[1m[22m
+[2mdist/[22m[32massets/unnamed-BGhqsQAS.png                                        [39m[1m[2m  118.43 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-07 at 10.36.12 AM-BKafy9yq.jpeg      [39m[1m[2m  131.32 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-07 at 10.36.12 AM (1)-BgZckdpd.jpeg  [39m[1m[2m  154.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 2.17.03 PM-DdgpnpjM.jpeg       [39m[1m[2m  186.22 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 1.51.31 PM-C9QFSdTr.jpeg       [39m[1m[2m  188.53 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 12.09.08 PM-CU0ZV8zq.jpeg      [39m[1m[2m  192.61 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 2.37.24 PM-BwR_1OlE.jpeg       [39m[1m[2m  279.48 kB[22m[1m[22m
+[2mdist/[22m[32massets/Blog-Banner-22-4-J0-I_Rj7.png                               [39m[1m[2m  861.32 kB[22m[1m[22m
+[2mdist/[22m[32massets/4C84611600000578-0-image-a-8_1527003217917-ftw3621N.jpg     [39m[1m[2m  934.06 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 1.51.35 PM-CkHUwq7Y.jpeg       [39m[1m[2m1,228.92 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 12.09.10 PM-CHrROBDu.jpeg      [39m[1m[2m1,313.47 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 2.58.35 PM-C6aKm2xx.jpeg       [39m[1m[2m1,338.94 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 2.50.43 PM-DAoMi3i_.jpeg       [39m[1m[2m1,618.62 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 2.02.03 PM-BFeo0Y1D.jpeg       [39m[1m[2m1,918.09 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 1.51.49 PM-D0hD42zV.jpeg       [39m[1m[2m1,978.21 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 2.02.03 PMM-iE6O2Lih.jpeg      [39m[1m[2m2,221.08 kB[22m[1m[22m
+[2mdist/[22m[32massets/WhatsApp Image 2026-02-15 at 1.52.04 PM-CE8Bvf3A.jpeg       [39m[1m[2m2,518.87 kB[22m[1m[22m
+[2mdist/[22m[32massets/Baramati_Maharashtra (1)-mZ90dBMy.png                       [39m[1m[2m4,164.83 kB[22m[1m[22m
+[2mdist/[22m[32massets/Gemini_Generated_Image_fyeuozfyeuozfyeu-DjaSEdZV.png        [39m[1m[2m7,382.96 kB[22m[1m[22m
+[2mdist/[22m[35massets/index-06m3YoUw.css                                          [39m[1m[2m   82.61 kB[22m[1m[22m[2m Γöé gzip:  13.09 kB[22m
+[2mdist/[22m[36massets/purify.es-B9ZVCkUG.js                                       [39m[1m[2m   22.64 kB[22m[1m[22m[2m Γöé gzip:   8.75 kB[22m
+[2mdist/[22m[36massets/index.es-Rnmdw6NP.js                                        [39m[1m[2m  159.38 kB[22m[1m[22m[2m Γöé gzip:  53.43 kB[22m
+[2mdist/[22m[36massets/index-vHDrC8Gd.js                                           [39m[1m[33m2,099.68 kB[39m[22m[2m Γöé gzip: 578.90 kB[22m
+node.exe : [33m
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified 
+   : ([33m:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeComman 
+   dError
+ 
+(!) Some chunks are larger than 500 kB 
+after minification. Consider:
+- Using dynamic import() to code-split the 
+application
+- Use 
+build.rollupOptions.output.manualChunks to 
+improve chunking: https://rollupjs.org/conf
+iguration-options/#output-manualchunks
+- Adjust chunk size limit for this warning 
+via build.chunkSizeWarningLimit.[39m
+[32mΓ£ô built in 4.90s[39m
+[31merror during build:
+Error: 
+  Configure 
+"workbox.maximumFileSizeToCacheInBytes" to 
+change the limit: the default value is 2 
+MiB.
+  Check https://vite-pwa-org.netlify.app/gu
+ide/faq.html#missing-assets-from-sw-precach
+e-manifest for more information.
+  Assets exceeding the limit:
+  - assets/index-vHDrC8Gd.js is 2.1 MB, 
+and won't be precached.
+
+    at logWorkboxResult (file:///C:/MY/MYPR
+OJECTS/impetus/Frontend/node_modules/vite-p
+lugin-pwa/dist/chunk-G4TAN34B.js:44:13)
+    at generateServiceWorker (file:///C:/MY
+/MYPROJECTS/impetus/Frontend/node_modules/v
+ite-plugin-pwa/dist/index.js:209:3)
+    at async _generateSW (file:///C:/MY/MYP
+ROJECTS/impetus/Frontend/node_modules/vite-
+plugin-pwa/dist/index.js:234:5)
+    at async Object.handler (file:///C:/MY/
+MYPROJECTS/impetus/Frontend/node_modules/vi
+te-plugin-pwa/dist/index.js:427:13)
+    at async PluginDriver.hookParallel (fil
+e:///C:/MY/MYPROJECTS/impetus/Frontend/node
+_modules/rollup/dist/es/shared/node-entry.j
+s:22452:17)
+    at async Object.close (file:///C:/MY/MY
+PROJECTS/impetus/Frontend/node_modules/roll
+up/dist/es/shared/node-entry.js:23471:13)
+    at async buildEnvironment (file:///C:/M
+Y/MYPROJECTS/impetus/Frontend/node_modules/
+vite/dist/node/chunks/dep-D4NMHUTW.js:46258
+:17)
+    at async Object.defaultBuildApp [as 
+buildApp] (file:///C:/MY/MYPROJECTS/impetus
+/Frontend/node_modules/vite/dist/node/chunk
+s/dep-D4NMHUTW.js:46713:5)
+    at async CAC.<anonymous> (file:///C:/MY
+/MYPROJECTS/impetus/Frontend/node_modules/v
+ite/dist/node/cli.js:863:7)[39m

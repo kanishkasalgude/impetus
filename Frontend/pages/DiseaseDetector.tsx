@@ -1,13 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../src/context/LanguageContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../src/services/api';
-import { Sprout, Upload, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Sprout, Upload, MessageCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import DetectionHistorySidebar, { getDetectionHistory, saveDetectionHistory, clearDetectionHistory } from '../components/DetectionHistorySidebar';
+import { useLoadingTips } from '../src/hooks/useLoadingTips';
 
 const DiseaseDetector: React.FC = () => {
     const { t } = useLanguage();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Recover from history
+    useEffect(() => {
+        if (location.state?.historyItem) {
+            const item = location.state.historyItem;
+            setDiseaseResult({ disease: item.name, confidence: item.confidence });
+            if (item.preview) setDiseasePreview(item.preview);
+        }
+    }, [location.state]);
 
     // Sidebar State
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -19,6 +30,7 @@ const DiseaseDetector: React.FC = () => {
     const [diseaseLoading, setDiseaseLoading] = useState(false);
     const [diseaseResult, setDiseaseResult] = useState<any | null>(null);
     const [diseaseError, setDiseaseError] = useState<string | null>(null);
+    const loadingTip = useLoadingTips(diseaseLoading);
 
     // Listen for toggle-sidebar event
     useEffect(() => {
@@ -153,6 +165,16 @@ const DiseaseDetector: React.FC = () => {
                         >
                             {diseaseLoading ? t.analyzingBtn : t.detectDisease}
                         </button>
+
+                        {diseaseLoading && (
+                            <div className="bg-[#E8F5E9] p-4 rounded-xl border border-deep-green/20 animate-in fade-in zoom-in text-center mt-4">
+                                <div className="flex items-center justify-center gap-2 mb-2">
+                                    <Loader2 className="w-5 h-5 text-deep-green animate-spin" />
+                                    <span className="font-bold text-deep-green">{t.analyzingBtn}...</span>
+                                </div>
+                                <p className="text-sm font-medium italic text-deep-green/80">"{loadingTip}"</p>
+                            </div>
+                        )}
 
                         {diseaseError && (
                             <div className="p-4 bg-red-50 text-red-600 border border-red-100 font-medium rounded-lg">

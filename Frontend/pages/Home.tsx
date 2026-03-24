@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../src/context/LanguageContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Recycle, Briefcase, Loader2, Target, Activity, ShieldCheck, TrendingUp, CheckCircle, AlertTriangle, MapPin, Sprout } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Recycle, Briefcase, Loader2, Target, Activity, ShieldCheck, TrendingUp, CheckCircle, AlertTriangle, MapPin, Sprout } from 'lucide-react';
 import { useFarm } from '../src/context/FarmContext';
 import { api } from '../src/services/api';
 import { getLocalizedValue, normalizeValue } from '../src/utils/localizationUtils';
@@ -158,7 +158,7 @@ const Home: React.FC = () => {
     }, []);
 
     return (
-        <div className="h-[calc(100dvh-68px)] p-0 md:p-4 lg:p-6 bg-gray-50">
+        <div className="h-[calc(100dvh-68px)] p-0 md:p-4 lg:p-6 bg-white">
             <PlanSidebar
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
@@ -209,28 +209,33 @@ const Home: React.FC = () => {
                                     
                                     {/* Overview Section */}
                                     {roadmap.title && (
+                                        <>
+                                        <button
+                                            onClick={() => navigate(-1)}
+                                            className="mb-6 flex items-center gap-2 px-4 py-2 text-[#555555] hover:text-[#1B5E20] transition-colors bg-white rounded-xl hover:bg-gray-50 border border-gray-200 shadow-sm w-fit font-bold text-sm"
+                                            title={t.back || "Back"}
+                                        >
+                                            <ArrowLeft className="w-4 h-4" /> {t.back || "Back"}
+                                        </button>
                                         <div className="mb-8 p-6 md:p-8 bg-gradient-to-br from-green-50 to-white rounded-[32px] border border-green-100 shadow-sm">
-                                            <div className="flex flex-wrap items-center gap-2 mb-4">
-                                                <span className="px-4 py-1.5 bg-[#E8F5E9] text-[#1B5E20] text-sm font-black uppercase tracking-widest rounded-full flex items-center gap-1.5 border border-green-200">
+                                            <div className="flex items-center gap-4 mb-6">
+                                                <h2 className="text-2xl md:text-4xl font-black text-[#1B5E20] tracking-tight flex items-center gap-3">
+                                                    <Target className="w-8 h-8 md:w-10 md:h-10 text-[#2E7D32]" />
+                                                    {roadmap.title}
+                                                </h2>
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center gap-2 pl-12 -mt-2">
+                                                <span className="px-4 py-1.5 bg-[#E8F5E9] text-[#1B5E20] text-sm font-black uppercase tracking-widest rounded-full flex items-center gap-1.5 border border-green-200 shadow-sm">
                                                     <MapPin size={16} /> {activeFarm?.nickname || 'Your Farm'}
                                                 </span>
-                                                <button 
-                                                    onClick={() => window.dispatchEvent(new CustomEvent('toggle-sidebar'))} 
-                                                    className="px-4 py-1.5 bg-white text-[#1B5E20] hover:text-[#2E7D32] text-sm font-black uppercase tracking-widest rounded-full flex items-center gap-1.5 border border-green-200 hover:bg-green-50 transition-colors shadow-sm active:scale-95"
-                                                >
-                                                    <Sprout size={16} /> {(t as any).changeCrop || 'Change Crop / Farm'}
-                                                </button>
+                                                <span className="px-4 py-1.5 bg-[#E8F5E9] text-[#1B5E20] text-sm font-black uppercase tracking-widest rounded-full flex items-center gap-1.5 border border-green-200 shadow-sm">
+                                                    <Sprout size={16} /> {selectedCrop}
+                                                </span>
                                             </div>
-                                            <h2 className="text-2xl md:text-4xl font-black text-[#1B5E20] tracking-tight mb-4 flex items-center gap-3">
-                                                <Target className="w-8 h-8 md:w-10 md:h-10 text-[#2E7D32]" />
-                                                {roadmap.title}
-                                            </h2>
-                                            {roadmap.overview && (
-                                                <p className="text-gray-700 font-medium text-lg leading-relaxed">
-                                                    {roadmap.overview}
-                                                </p>
-                                            )}
+                                            {/* overview paragraph removed as per user request */}
                                         </div>
+                                        </>
                                     )}
 
                                     {/* Phases Timeline */}

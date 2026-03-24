@@ -4,6 +4,7 @@ import { api } from '../src/services/api';
 import { ArrowLeft, Download, CheckCircle, AlertTriangle, TrendingUp, Users, Calendar, Shield, Loader2, Share2 } from 'lucide-react';
 import { auth } from '../firebase';
 import { useLanguage } from '../src/context/LanguageContext';
+import { useLoadingTips } from '../src/hooks/useLoadingTips';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -36,6 +37,7 @@ const Roadmap: React.FC = () => {
     const [roadmap, setRoadmap] = useState<RoadmapData | null>(null);
     const [error, setError] = useState('');
     const contentRef = useRef<HTMLDivElement>(null);
+    const loadingTip = useLoadingTips(loading);
 
     // Decode businessName if it was encoded in URL
     const decodedName = decodeURIComponent(businessName || '');
@@ -114,10 +116,17 @@ const Roadmap: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen">
-                <Loader2 className="w-16 h-16 text-[#1B5E20] animate-spin mb-4" />
-                <h2 className="text-2xl font-bold text-[#1E1E1E] text-center">{t.generatingRoadmap}</h2>
-                <p className="text-[#555555] mt-2 text-center">{t.analyzingRoadmap}</p>
+            <div className="flex flex-col items-center justify-center min-h-[100vh] px-4 text-center">
+                <div className="relative mb-6">
+                    <div className="w-40 h-40 rounded-full border-4 border-[#E6E6E6] border-t-[#1B5E20] animate-[spin_2s_linear_infinite] shadow-xl"></div>
+                </div>
+                <h2 className="text-3xl font-extrabold text-[#1E1E1E] mt-8 mb-4">{t.generatingRoadmap}</h2>
+                <div className="max-w-md space-y-4 w-full">
+                    <p className="text-[#555555] animate-pulse text-sm mb-4">{t.analyzingRoadmap}</p>
+                    <div className="bg-[#E8F5E9] p-4 rounded-xl border border-[#1B5E20]/20 animate-in fade-in zoom-in duration-500">
+                        <p className="text-[#1B5E20] font-bold italic text-sm">"{loadingTip}"</p>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -146,10 +155,24 @@ const Roadmap: React.FC = () => {
                 {/* Header Actions */}
                 <div className="flex items-center justify-between mb-8 no-print">
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => {
+                            const prev = location.state?.previousState;
+                            if (prev?.recommendations) {
+                                navigate('/advisory', { state: prev });
+                            } else {
+                                navigate(-1);
+                            }
+                        }}
                         className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E6E6E6] text-[#1B5E20] font-bold rounded-xl hover:bg-[#F5F5F5] transition-all shadow-sm"
                     >
                         <ArrowLeft className="w-5 h-5" /> {t.back || "Back"}
+                    </button>
+                    <button
+                        onClick={handleDownloadPDF}
+                        disabled={loading}
+                        className="flex items-center gap-2 px-6 py-3 bg-[#1B5E20] text-white rounded-xl font-bold hover:bg-[#000D0F] transition-all shadow-sm uppercase tracking-wider"
+                    >
+                        <Download className="w-5 h-5" /> {t.exportPlan}
                     </button>
                 </div>
 
@@ -224,15 +247,8 @@ const Roadmap: React.FC = () => {
                 <div className="mt-12 mb-12">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div className="flex items-center gap-3">
-                            <Calendar className="w-8 h-8 text-[#1B5E20]" />
                             <h2 className="text-3xl font-extrabold text-[#1E1E1E] uppercase tracking-tight">1. {t.strategicTimeline}</h2>
                         </div>
-                        <button
-                            onClick={handleDownloadPDF}
-                            className="flex items-center gap-2 px-6 py-3 bg-white border-2 border-deep-green text-deep-green font-bold hover:bg-deep-green hover:text-white transition-all shadow-sm uppercase tracking-wider"
-                        >
-                            <Download className="w-5 h-5" /> {t.exportPlan}
-                        </button>
                     </div>
 
                     <div className="space-y-8">
@@ -299,8 +315,8 @@ const Roadmap: React.FC = () => {
                 </div>
             </div>
 
-            {/* Floating Interaction Button - Fixed at bottom center */}
-            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 flex gap-4 no-print">
+            {/* Ask Chatbot Button - Placed after all year plan */}
+            <div className="flex justify-center mt-12 mb-8 no-print">
                 <button
                     onClick={() => {
                         const profileSummary = `Budget: ${roadmap.years[0]?.profit || 'N/A'}, Experience: High, Market Access: Village only, Risk Preference: Safe income`;
@@ -348,9 +364,6 @@ Format: Please use Markdown with headers and bold text for a professional "Roadm
                     <Users className="w-6 h-6" /> {t.askChatbotBtn}
                 </button>
             </div>
-
-            {/* Padding for fixed button */}
-            <div className="h-40"></div>
 
             <div className="max-w-5xl mx-auto">
                 {/* Disclaimer */}

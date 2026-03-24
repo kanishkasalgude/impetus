@@ -4,7 +4,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import { api } from '../src/services/api';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { collection, addDoc, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { ChatMessage } from '../types';
 import { useLanguage } from '../src/context/LanguageContext';
 import { useFarm } from '../src/context/FarmContext';
@@ -30,7 +31,9 @@ import {
     Search as SearchIcon
 } from 'lucide-react';
 import { onAuthStateChanged } from '../firebase';
-import { chatService, ChatSession, Message as FirestoreMessage } from '../src/services/chatService';
+import { chatService } from '../src/services/chatService';
+import { useLoadingTips } from '../src/hooks/useLoadingTips';
+import jsPDF from 'jspdf';
 
 /* 
   Refactored to have a dedicated Chat View.
@@ -55,10 +58,11 @@ const WasteToValue: React.FC = () => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [isChatLoading, setIsChatLoading] = useState(false);
+    const loadingTip = useLoadingTips(view === 'processing');
 
     // History & Auth State
     const [user, setUser] = useState<any>(null);
-    const [chats, setChats] = useState<ChatSession[]>([]);
+    const [wasteHistory, setWasteHistory] = useState<any[]>([]);
     const [activeChatId, setActiveChatId] = useState<string | null>(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
@@ -78,36 +82,44 @@ const WasteToValue: React.FC = () => {
         }
     }, [view, resultData, lang]);
 
-    // Auth & Chat History Subscription
+    // Auth & Waste Analysis History Subscription
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             if (currentUser) {
                 setUser(currentUser);
-                // Subscribe to Waste chats only
-                const unsubChats = chatService.subscribeToUserChats(currentUser.uid, (data) => {
-                    setChats(data);
-                }, 'waste');
-                return () => unsubChats();
+                // Subscribe to waste_history collection (analysis results, not chats)
+                const q = query(
+                    collection(db, 'users', currentUser.uid, 'waste_history'),
+                    orderBy('createdAt', 'desc'),
+                    limit(20)
+                );
+                const unsubHistory = onSnapshot(q, (snapshot) => {
+                    const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    setWasteHistory(items);
+                });
+                return () => unsubHistory();
             } else {
                 setUser(null);
-                setChats([]);
+                setWasteHistory([]);
             }
         });
         return () => unsubscribe();
     }, []);
 
-    // Load Messages for Active Chat
-    useEffect(() => {
-        if (user && activeChatId) {
-            chatService.getChatMessages(user.uid, activeChatId).then(msgs => {
-                setMessages(msgs.map(m => ({
-                    role: (m.role === 'assistant' || m.role === 'model') ? 'model' : 'user',
-                    text: m.content
-                })));
-                setView('chat'); // Switch to chat view if we picked a history item
+    // Helper: save analysis result to Firestore
+    const saveWasteHistory = async (crop: string, result: any) => {
+        if (!user) return;
+        try {
+            await addDoc(collection(db, 'users', user.uid, 'waste_history'), {
+                title: `${crop} — Waste Analysis`,
+                crop,
+                result,
+                createdAt: new Date()
             });
+        } catch (err) {
+            console.error('Failed to save waste history:', err);
         }
-    }, [activeChatId, user]);
+    };
 
     // Scroll to bottom of chat
     useEffect(() => {
@@ -143,6 +155,7 @@ const WasteToValue: React.FC = () => {
             if (response.success && response.result) {
                 setResultData(response.result);
                 setView('results');
+                saveWasteHistory(cropInput, response.result);
             } else {
                 throw new Error('Invalid data format');
             }
@@ -168,6 +181,7 @@ const WasteToValue: React.FC = () => {
             if (response.success && response.result) {
                 setResultData(response.result);
                 setView('results');
+                saveWasteHistory(crop, response.result);
             } else {
                 throw new Error('Invalid data format');
             }
@@ -276,7 +290,7 @@ const WasteToValue: React.FC = () => {
     // --- RENDER VIEW: INPUT ---
     if (view === 'input' || view === 'intro') { // Modified to handle 'intro' and 'input' within this block
         return (
-            <div className="min-h-[calc(100vh-80px)] overflow-hidden flex flex-col md:flex-row max-w-[1600px] mx-auto">
+            <div className="min-h-[calc(100vh-80px)] overflow-hidden flex flex-col md:flex-row max-w-[1600px] mx-auto bg-white">
                 {/* LEFT: Hero/Intro Section (40%) */}
                 <div className={`w-full md:w-[40%] bg-deep-green text-white p-8 md:p-12 flex flex-col justify-between transition-all duration-500 relative overflow-hidden ${view !== 'intro' ? 'hidden md:flex' : 'flex'}`}>
                     {/* Background Pattern */}
@@ -337,16 +351,23 @@ const WasteToValue: React.FC = () => {
                         </div>
                     )}
                     {view === 'input' && (
-                        <div className="flex-1 flex flex-col items-start justify-center p-6 md:p-8">
+                        <div className="flex-1 flex flex-col items-start justify-start p-6 md:p-8 bg-white overflow-y-auto">
+                            <div className="w-full">
+                                <button
+                                    onClick={() => navigate(-1)}
+                                    className="mb-8 flex items-center gap-2 px-4 py-2 text-[#555555] hover:text-[#1B5E20] transition-colors bg-white rounded-xl hover:bg-gray-50 border border-gray-200 shadow-sm w-fit font-bold text-sm"
+                                >
+                                    <ArrowLeft className="w-4 h-4" /> {t.back || "Back"}
+                                </button>
 
-                            <div className="w-full max-w-md mx-auto">
-                                <div className="w-16 h-16 md:w-20 md:h-20 bg-light-green text-deep-green flex items-center justify-center mx-auto mb-6 rounded-full">
-                                    <Leaf className="w-8 h-8 md:w-10 md:h-10" />
-                                </div>
-                                <h2 className="text-xl md:text-2xl font-bold text-deep-green mb-4 uppercase text-center">{t.waste?.manualWasteInput || "Manual Waste Input"}</h2>
-                                <p className="text-gray-600 mb-8 text-center">{t.waste?.describeWaste || "Describe your farm waste to find valuable uses."}</p>
+                                <div className="w-full max-w-xl mx-auto bg-white p-8 md:p-12 rounded-[32px] shadow-xl border border-gray-100">
+                                    <div className="w-16 h-16 md:w-20 md:h-20 bg-light-green text-deep-green flex items-center justify-center mx-auto mb-6 rounded-full shadow-inner">
+                                        <Leaf className="w-8 h-8 md:w-10 md:h-10" />
+                                    </div>
+                                    <h2 className="text-xl md:text-2xl font-black text-deep-green mb-4 uppercase text-center tracking-tight">{t.waste?.manualWasteInput || "Manual Waste Input"}</h2>
+                                    <p className="text-gray-500 mb-8 text-center font-medium">{t.waste?.describeWaste || "Describe your farm waste to find valuable uses."}</p>
 
-                                <form onSubmit={handleAnalyze} className="space-y-6">
+                                    <form onSubmit={handleAnalyze} className="space-y-6">
                                     <div className="relative">
                                         <input
                                             type="text"
@@ -389,6 +410,7 @@ const WasteToValue: React.FC = () => {
                                     </button>
                                 </form>
                             </div>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -399,17 +421,19 @@ const WasteToValue: React.FC = () => {
     // --- RENDER VIEW: PROCESSING ---
     if (view === 'processing') {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 text-center">
-                <div className="relative">
-                    <div className="w-24 h-24 rounded-full border-4 border-[#E6E6E6] border-t-[#1B5E20] animate-spin"></div>
-                    <Recycle className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-[#1B5E20]" />
+            <div className="flex flex-col items-center justify-center min-h-[100vh] px-4 text-center">
+                <div className="relative mb-6">
+                    <div className="w-40 h-40 rounded-full border-4 border-[#E6E6E6] border-t-[#1B5E20] border-r-blue-500 animate-[spin_2s_linear_infinite] shadow-xl"></div>
+                    <Recycle className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 text-[#1B5E20]" />
                 </div>
-                <h2 className="text-3xl font-bold text-[#1E1E1E] mt-8 mb-4">
+                <h2 className="text-3xl font-extrabold text-[#1E1E1E] mt-8 mb-4">
                     {t.analyzingBtn}... {cropInput}
                 </h2>
                 <div className="max-w-md space-y-4 w-full">
-
-                    <p className="text-[#555555] animate-pulse text-sm">{t.identifyingOpportunities}</p>
+                    <p className="text-[#555555] animate-pulse text-sm mb-4">{t.identifyingOpportunities}</p>
+                    <div className="bg-[#E8F5E9] p-4 rounded-xl border border-[#1B5E20]/20 animate-in fade-in zoom-in duration-500">
+                        <p className="text-[#1B5E20] font-bold italic text-sm">"{loadingTip}"</p>
+                    </div>
                 </div>
             </div>
         );
@@ -542,16 +566,15 @@ const WasteToValue: React.FC = () => {
     if (!resultData) return null;
 
     return (
-        <div className="max-w-7xl mx-auto space-y-8 pt-8 pb-16 px-4">
+        <div className="max-w-7xl mx-auto space-y-8 pt-6 pb-16 px-4">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-2">
+                <div className="flex flex-col gap-4">
                     <button 
                         onClick={() => setView('input')} 
-                        className="text-[#555555] hover:text-[#1B5E20] transition-colors p-2 -ml-2 rounded-full hover:bg-[#E8F5E9]"
-                        title={t.back || "Back"}
+                        className="flex items-center gap-2 px-4 py-2 text-[#555555] hover:text-[#1B5E20] transition-colors bg-white rounded-xl hover:bg-gray-50 border border-gray-200 shadow-sm w-fit font-bold text-sm"
                     >
-                        <ArrowLeft className="w-7 h-7" />
+                        <ArrowLeft className="w-4 h-4" /> {t.back || "Back"}
                     </button>
                     <div>
                         <h1 className="text-2xl md:text-3xl font-extrabold text-[#1E1E1E] flex items-center gap-2">
@@ -561,13 +584,7 @@ const WasteToValue: React.FC = () => {
                     </div>
                 </div>
 
-                <button
-                    onClick={() => setIsHistoryOpen(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-[#1B5E20] text-[#1B5E20] rounded-xl font-bold hover:bg-[#1B5E20] hover:text-white transition-all shadow-sm w-fit active:scale-95"
-                >
-                    <History className="w-5 h-5" />
-                    {t.history || "History"}
-                </button>
+                {/* History button removed as per user request */}
             </div>
 
             {/* SECTION A: Suggestion Cards */}
@@ -630,28 +647,146 @@ const WasteToValue: React.FC = () => {
             {/* Know More Modal */}
             {selectedOption && (
                 <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md transition-all animate-in fade-in duration-200"
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md transition-all animate-in fade-in duration-200"
                     onClick={() => setSelectedOption(null)}
                 >
                     <div
-                        className="bg-white w-full max-w-4xl max-h-[90vh] mx-2 rounded-[2rem] shadow-2xl border border-[#E6E6E6] overflow-hidden flex flex-col"
+                        className="bg-white w-full h-[100vh] max-w-none rounded-none shadow-2xl overflow-hidden flex flex-col"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Modal Header */}
-                        <div className="p-6 border-b border-[#E6E6E6] flex justify-between items-center bg-[#E8F5E9]">
+                        <div className="p-6 border-b border-[#E6E6E6] flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-[#E8F5E9] data-html2canvas-ignore">
                             <h3 className="text-2xl font-bold text-[#1E1E1E] leading-tight">
                                 {selectedOption.title}
                             </h3>
-                            <button
-                                onClick={() => setSelectedOption(null)}
-                                className="p-2 bg-[#E6E6E6] rounded-full hover:bg-gray-300 transition-colors"
-                            >
-                                <X className="w-5 h-5 text-[#555555]" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => {
+                                        const pdf = new jsPDF('p', 'mm', 'a4');
+                                        const pW = pdf.internal.pageSize.getWidth();
+                                        const pH = pdf.internal.pageSize.getHeight();
+                                        const margin = 15;
+                                        let y = 0;
+
+                                        const GREEN: [number, number, number] = [27, 94, 32];
+                                        const LIGHT_GREEN: [number, number, number] = [232, 245, 233];
+                                        const DARK: [number, number, number] = [30, 30, 30];
+                                        const MID: [number, number, number] = [80, 80, 80];
+                                        const GREY: [number, number, number] = [120, 120, 120];
+
+                                        const checkPage = (needed = 8) => {
+                                            if (y + needed > pH - 18) { pdf.addPage(); y = margin; }
+                                        };
+
+                                        const addFooter = () => {
+                                            const total = (pdf as any).internal.getNumberOfPages();
+                                            for (let p = 1; p <= total; p++) {
+                                                pdf.setPage(p);
+                                                pdf.setFontSize(8);
+                                                pdf.setFont('helvetica', 'normal');
+                                                pdf.setTextColor(...GREY);
+                                                pdf.text('Generated by KrishiSahAI — Impetus', margin, pH - 8);
+                                                pdf.text(`Page ${p} of ${total}`, pW - margin, pH - 8, { align: 'right' });
+                                            }
+                                        };
+
+                                        // Replace ₹ with Rs. because jsPDF helvetica doesn't support the Rupee symbol
+                                        const sanitizeText = (text: string): string =>
+                                            text ? String(text).replace(/₹/g, 'Rs.') : '';
+
+                                        const addText = (text: string, size: number, bold = false, color: [number, number, number] = DARK, x = margin) => {
+                                            pdf.setFontSize(size);
+                                            pdf.setFont('helvetica', bold ? 'bold' : 'normal');
+                                            pdf.setTextColor(...color);
+                                            const lines = pdf.splitTextToSize(sanitizeText(text), pW - margin - x);
+                                            lines.forEach((ln: string) => {
+                                                checkPage(size * 0.35 + 2);
+                                                pdf.text(ln, x, y);
+                                                y += size * 0.35 + 1.5;
+                                            });
+                                            y += 1.5;
+                                        };
+
+                                        // ── Header Banner ─────────────────────────────────────
+                                        pdf.setFillColor(...GREEN);
+                                        pdf.rect(0, 0, pW, 30, 'F');
+                                        pdf.setFontSize(18);
+                                        pdf.setFont('helvetica', 'bold');
+                                        pdf.setTextColor(255, 255, 255);
+                                        pdf.text('KrishiSahAI — Waste to Value Analysis', margin, 13);
+                                        pdf.setFontSize(9);
+                                        pdf.setFont('helvetica', 'normal');
+                                        pdf.setTextColor(200, 230, 200);
+                                        pdf.text(new Date().toLocaleString(), margin, 22);
+                                        y = 38;
+
+                                        // ── Crop Title ────────────────────────────────────────
+                                        addText(selectedOption.title, 16, true, GREEN);
+                                        if (selectedOption.subtitle) addText(selectedOption.subtitle, 11, false, MID);
+
+                                        // Divider
+                                        pdf.setDrawColor(...LIGHT_GREEN);
+                                        pdf.setLineWidth(0.5);
+                                        pdf.line(margin, y, pW - margin, y);
+                                        y += 6;
+
+                                        // ── Basic Idea ────────────────────────────────────────
+                                        if (selectedOption.fullDetails?.basicIdea?.length > 0) {
+                                            checkPage(12);
+                                            // Section heading with left accent bar
+                                            pdf.setFillColor(...GREEN);
+                                            pdf.rect(margin, y - 4, 2.5, 7, 'F');
+                                            addText('Basic Idea', 13, true, GREEN, margin + 5);
+                                            selectedOption.fullDetails.basicIdea.forEach((line: string) => {
+                                                checkPage(8);
+                                                addText(`• ${line}`, 10, false, MID, margin + 5);
+                                            });
+                                            y += 4;
+                                        }
+
+                                        // ── Sections ──────────────────────────────────────────
+                                        selectedOption.fullDetails?.sections?.forEach((section: any) => {
+                                            checkPage(14);
+                                            // Section heading with left accent bar
+                                            pdf.setFillColor(...GREEN);
+                                            pdf.rect(margin, y - 4, 2.5, 7, 'F');
+                                            addText(section.title, 12, true, GREEN, margin + 5);
+
+                                            // Light background block for content
+                                            const sectionLines: string[] = [];
+                                            section.content?.forEach((item: string) => {
+                                                const wrapped = pdf.splitTextToSize(`• ${item}`, pW - margin * 2 - 10);
+                                                sectionLines.push(...wrapped);
+                                            });
+                                            const blockH = sectionLines.length * 5 + 8;
+                                            checkPage(blockH);
+                                            pdf.setFillColor(...LIGHT_GREEN);
+                                            pdf.roundedRect(margin, y - 2, pW - margin * 2, blockH, 2, 2, 'F');
+
+                                            section.content?.forEach((item: string) => {
+                                                addText(`• ${item}`, 10, false, [40, 80, 40], margin + 5);
+                                            });
+                                            y += 4;
+                                        });
+
+                                        addFooter();
+                                        pdf.save(`KrishiSahAI-WasteAnalysis-${selectedOption.title.replace(/\s+/g, '_')}.pdf`);
+                                    }}
+                                    className="px-4 py-2 bg-[#1B5E20] text-white rounded-lg font-bold text-sm hover:bg-[#000D0F] transition-colors shadow-sm flex items-center gap-2"
+                                >
+                                    <FileText className="w-4 h-4" /> Export PDF
+                                </button>
+                                <button
+                                    onClick={() => setSelectedOption(null)}
+                                    className="p-2 bg-[#E6E6E6] rounded-full hover:bg-gray-300 transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-[#555555]" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Modal Content */}
-                        <div className="p-8 overflow-y-auto space-y-8 custom-scrollbar bg-white">
+                        <div id="waste-modal-content" className="p-8 overflow-y-auto space-y-8 custom-scrollbar bg-white">
                             {/* Basic Idea */}
                             {(selectedOption.fullDetails?.basicIdea?.length > 0) && (
                                 <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
@@ -711,30 +846,35 @@ const WasteToValue: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-3 space-y-2" style={{ maxHeight: 'calc(100vh - 80px)' }}>
-                    {chats.length === 0 ? (
+                    {wasteHistory.length === 0 ? (
                         <div className="text-center text-gray-400 py-12">
                             <History size={32} className="mx-auto mb-3 opacity-40" />
                             <p className="text-sm font-medium">{t.sidebar?.noWasteHistory || 'No previous waste analysis found.'}</p>
                             <p className="text-xs mt-1">{t.sidebar?.resultsAppearHere || 'Results will appear here'}</p>
                         </div>
                     ) : (
-                        chats.map((chat) => (
+                        wasteHistory.map((item: any) => (
                             <button
-                                key={chat.id}
+                                key={item.id}
                                 onClick={() => {
-                                    setActiveChatId(chat.id);
+                                    // Restore the analysis result and show results view
+                                    setCropInput(item.crop || '');
+                                    setResultData(item.result);
+                                    setMessages([]);
+                                    setActiveChatId(null);
+                                    setView('results');
                                     setIsHistoryOpen(false);
                                 }}
-                                className={`w-full text-left p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all group ${activeChatId === chat.id ? 'bg-[#E8F5E9] border-[#1B5E20]' : ''}`}
+                                className="w-full text-left p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all group"
                             >
                                 <div className="flex items-center gap-2">
                                     <div className="p-1.5 rounded-lg bg-[#1B5E2015] text-[#1B5E20]">
                                         <Recycle size={16} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-gray-800 truncate">{chat.title}</p>
+                                        <p className="text-sm font-bold text-gray-800 truncate">{item.title}</p>
                                         <p className="text-xs text-gray-400">
-                                            {chat.updatedAt?.toDate ? chat.updatedAt.toDate().toLocaleDateString() : 'Recent'}
+                                            {item.createdAt?.toDate ? item.createdAt.toDate().toLocaleDateString() : 'Recent'}
                                         </p>
                                     </div>
                                 </div>

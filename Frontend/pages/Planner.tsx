@@ -224,7 +224,7 @@ const Planner: React.FC = () => {
                         </div>
                         <h1 className="text-3xl md:text-4xl font-extrabold text-[#1E1E1E] mb-4">{roadmap.title}</h1>
                         <div className="text-[#555555] text-lg max-w-3xl mx-auto leading-relaxed text-left prose prose-lg prose-green max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{roadmap.overview}</ReactMarkdown>
+                            {/* overview paragraph removed as per user request */}
                         </div>
                     </div>
 

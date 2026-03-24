@@ -20,6 +20,7 @@ import {
     Menu
 } from 'lucide-react';
 import { PlanSidebar } from '../components/PlanSidebar';
+import { useLoadingTips } from '../src/hooks/useLoadingTips';
 
 interface AIResult {
     fertilizer_options?: {
@@ -56,6 +57,7 @@ const FarmHealth: React.FC = () => {
     const [analyzing, setAnalyzing] = useState<Record<string, boolean>>({});
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
+    const loadingTip = useLoadingTips(true);
 
     // Sync selected crop
     useEffect(() => {
@@ -110,9 +112,15 @@ const FarmHealth: React.FC = () => {
         }
     };
 
-    const openDeepDive = (result: AIResult, crop: string) => {
-        const fertilizers = result.fertilizer_options?.map(opt => opt.name || opt.action).filter(Boolean).join(', ') || '';
-        const prompt = `Please provide an expert consultation on the fertilizer recommendations for ${crop}, specifically focusing on the use of ${fertilizers}. I require a detailed explanation of the rationale behind this selection, its impact on the growth cycle, and best practices for sustainable application.`;
+    const openDeepDive = (result: AIResult, crop: string, specificOption?: any) => {
+        let prompt;
+        if (specificOption) {
+            const name = specificOption.name || specificOption.action;
+            prompt = `Please provide a detailed expert analysis for the fertilizer "${name}" recommended for ${crop}. Cover: rationale for selection, optimal application methods, quantities (${specificOption.quantity}), timing (${specificOption.timing}), compatibility with local soil conditions, and any risk factors. Also include government subsidy schemes available for this fertilizer in India.`;
+        } else {
+            const fertilizers = result.fertilizer_options?.map(opt => opt.name || opt.action).filter(Boolean).join(', ') || '';
+            prompt = `Please provide an expert consultation on the fertilizer recommendations for ${crop}, specifically focusing on the use of ${fertilizers}. I require a detailed explanation of the rationale behind this selection, its impact on the growth cycle, and best practices for sustainable application.`;
+        }
         navigate('/chat', { state: { initialMessage: prompt, fromFarmHealth: true } });
     };
 
@@ -145,6 +153,14 @@ const FarmHealth: React.FC = () => {
 
 
             <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+                {/* Back Button */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 px-4 py-2 text-[#555555] hover:text-[#1B5E20] transition-colors bg-white rounded-xl hover:bg-gray-50 border border-gray-200 shadow-sm w-fit font-bold text-sm"
+                >
+                    <ArrowLeft className="w-4 h-4" /> Back
+                </button>
+
                 {!activeFarm ? (
                     <div className="text-center py-20 text-gray-400 font-bold uppercase tracking-widest text-sm">No active farm selected. Please add a farm in your Profile.</div>
                 ) : (
@@ -186,17 +202,19 @@ const FarmHealth: React.FC = () => {
 
                                                     <div className="w-full">
                                                         {!result ? (
-                                                                <div className="flex flex-col items-center justify-center py-10 px-4 text-center rounded-3xl border border-emerald-100/50 bg-gradient-to-b from-transparent to-emerald-50/30">
-                                                                    <div className="relative mb-5">
-                                                                        <div className="absolute inset-0 bg-emerald-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
-                                                                        <div className="relative bg-white p-3 rounded-2xl shadow-sm border border-emerald-50">
-                                                                            <Loader2 className="w-6 h-6 text-emerald-600 animate-spin" />
+                                                                    <div className="flex flex-col items-center justify-center py-10 px-4 text-center rounded-3xl border border-emerald-100/50 bg-gradient-to-b from-transparent to-emerald-50/30 w-full mb-6">
+                                                                        <div className="relative mb-5">
+                                                                            <div className="absolute inset-0 bg-emerald-200 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                                                                            <div className="relative bg-white p-3 rounded-2xl shadow-sm border border-emerald-50">
+                                                                                <Loader2 className="w-6 h-6 text-emerald-600 animate-spin" />
+                                                                            </div>
+                                                                        </div>
+                                                                        <h4 className="text-sm font-black uppercase tracking-widest text-[#1B5E20] mb-3">Analyzing Crop Context...</h4>
+                                                                        <div className="bg-[#E8F5E9] p-3 rounded-xl border border-[#1B5E20]/20 animate-in fade-in zoom-in duration-500 max-w-sm w-full mx-auto">
+                                                                            <p className="text-[#1B5E20] font-bold italic text-sm">"{loadingTip}"</p>
                                                                         </div>
                                                                     </div>
-                                                                    <h4 className="text-sm font-black uppercase tracking-widest text-emerald-800 mb-1">Analyzing Crop Context...</h4>
-                                                                    <p className="text-xs font-medium text-emerald-600/70 max-w-xs leading-relaxed">Cross-referencing your soil type and location with the latest agrinomic AI models.</p>
-                                                                </div>
-                                                            ) : (
+                                                                ) : (
                                                                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-3">
                                                                     {result.fertilizer_options?.map((option, optIdx) => (
                                                                         <div key={optIdx} className="border border-emerald-100 rounded-2xl p-4 md:p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden mb-4">
@@ -248,15 +266,44 @@ const FarmHealth: React.FC = () => {
                                                                                     </ul>
                                                                                 </div>
                                                                             )}
+
+                                                                            {/* Per-option Deep Dive button */}
+                                                                            <button
+                                                                                onClick={() => openDeepDive(result, selectedCrop, option)}
+                                                                                className="w-full mt-3 group relative flex items-center justify-center gap-2 bg-white border-2 border-[#1B5E20] text-[#1B5E20] px-4 py-2.5 rounded-xl overflow-hidden transition-all duration-300 hover:bg-[#1B5E20] hover:text-white active:scale-[0.98]"
+                                                                            >
+                                                                                <Info className="w-4 h-4" />
+                                                                                <span className="text-sm font-black uppercase tracking-wider">Deep Dive: {option.name || option.action}</span>
+                                                                            </button>
                                                                         </div>
                                                                     ))}
 
-                                                                    <button
-                                                                        onClick={() => openDeepDive(result, selectedCrop)}
-                                                                        className="w-full mt-2 group relative flex items-center justify-center gap-3 bg-[#1B5E20] text-white px-5 py-3 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-[#1B5E20]/30 active:scale-[0.98]">
-                                                                        <div className="absolute inset-0 bg-gradient-to-r from-[#1B5E20] to-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                                                        <span className="relative z-10 text-sm font-black uppercase tracking-[0.2em]">Deep Dive Analysis</span>
-                                                                    </button>
+                                                                    {/* What's Best For You */}
+                                                                    {result.fertilizer_options && result.fertilizer_options.length > 1 && (
+                                                                        <div className="mt-6 p-5 bg-gradient-to-br from-[#1B5E20]/5 to-emerald-50 border-2 border-[#1B5E20]/20 rounded-2xl">
+                                                                            <div className="flex items-center gap-3 mb-3">
+                                                                                <div className="w-9 h-9 bg-[#1B5E20] rounded-xl flex items-center justify-center">
+                                                                                    <Sparkles className="w-4 h-4 text-white" />
+                                                                                </div>
+                                                                                <div>
+                                                                                    <h5 className="text-sm font-black text-[#1B5E20] uppercase tracking-widest">What's Best For You?</h5>
+                                                                                    <p className="text-xs text-gray-500 font-medium">AI recommendation based on your farm profile</p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <p className="text-sm font-bold text-gray-800 mb-1">
+                                                                                🏆 Top Pick: <span className="text-[#1B5E20]">{result.fertilizer_options[0].name || result.fertilizer_options[0].action}</span>
+                                                                            </p>
+                                                                            <p className="text-xs text-gray-600 leading-relaxed mb-3">
+                                                                                Based on your soil type and crop needs, Option 1 is the most balanced choice. {result.fertilizer_options.length > 1 && `Combining it with ${result.fertilizer_options[1].name || result.fertilizer_options[1].action} can maximize yield while reducing chemical load.`}
+                                                                            </p>
+                                                                            <button
+                                                                                onClick={() => openDeepDive(result, selectedCrop)}
+                                                                                className="w-full flex items-center justify-center gap-3 bg-[#1B5E20] text-white px-5 py-3 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-[#1B5E20]/30 active:scale-[0.98]"
+                                                                            >
+                                                                                <span className="text-sm font-black uppercase tracking-[0.2em]">Full Deep Dive Analysis</span>
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                     </div>
