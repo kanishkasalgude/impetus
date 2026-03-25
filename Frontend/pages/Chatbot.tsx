@@ -430,10 +430,10 @@ const Chatbot: React.FC = () => {
     useEffect(() => {
         if (location.state?.newChatWithGreeting && user) {
             handleNewChat();
-            
+
             const newState = { ...location.state, newChatWithGreeting: undefined };
             window.history.replaceState(newState, document.title);
-            
+
             setTimeout(() => {
                 setMessages([
                     { role: 'assistant', content: (t.chatbot as any)?.greeting || "Namaste! I am KrishiSahAI. How can I help you today?", createdAt: new Date() }
@@ -690,7 +690,7 @@ const Chatbot: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                         {messages.length > 0 && (
+                        {messages.length > 0 && (
                             <button
                                 onClick={() => setMessages([])}
                                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
@@ -698,7 +698,7 @@ const Chatbot: React.FC = () => {
                             >
                                 <Trash2 size={18} />
                             </button>
-                         )}
+                        )}
                     </div>
                 </div>
 
@@ -743,11 +743,10 @@ const Chatbot: React.FC = () => {
 
 
                                     <div
-                                        className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3 ${
-                                            msg.role === 'user'
+                                        className={`max-w-[85%] md:max-w-[70%] rounded-2xl px-4 py-3 ${msg.role === 'user'
                                                 ? 'bg-[#1B5E20] text-white rounded-br-sm'
                                                 : 'bg-white border border-gray-200 text-[#002105] rounded-bl-sm shadow-sm'
-                                        }`}
+                                            }`}
                                     >
                                         {/* Loading / streaming indicator */}
                                         {msg.role === 'assistant' && !msg.content && isLoading && i === messages.length - 1 ? (
@@ -810,8 +809,26 @@ const Chatbot: React.FC = () => {
                                                             )}
                                                         </button>                                                         {/* PDF Export Button - exports full conversation */}
                                                         <button
-                                                            onClick={() => {
+                                                            onClick={async () => {
                                                                 const pdf = new jsPDF('p', 'mm', 'a4');
+                                                                
+                                                                try {
+                                                                    const response = await fetch('/fonts/Hind-Regular.ttf');
+                                                                    const arrayBuffer = await response.arrayBuffer();
+                                                                    const bytes = new Uint8Array(arrayBuffer);
+                                                                    let binary = '';
+                                                                    for (let i = 0; i < bytes.byteLength; i++) {
+                                                                        binary += String.fromCharCode(bytes[i]);
+                                                                    }
+                                                                    const fontBase64 = btoa(binary);
+                                                                    pdf.addFileToVFS("Hind.ttf", fontBase64);
+                                                                    pdf.addFont("Hind.ttf", "Hind", "normal");
+                                                                    pdf.addFont("Hind.ttf", "Hind", "bold");
+                                                                    pdf.setFont("Hind");
+                                                                } catch (err) {
+                                                                    console.error("Failed to load Unicode font", err);
+                                                                }
+
                                                                 const pW = pdf.internal.pageSize.getWidth();
                                                                 const pH = pdf.internal.pageSize.getHeight();
                                                                 const margin = 15;
@@ -827,7 +844,7 @@ const Chatbot: React.FC = () => {
                                                                     for (let p = 1; p <= total; p++) {
                                                                         pdf.setPage(p);
                                                                         pdf.setFontSize(8);
-                                                                        pdf.setFont('helvetica', 'normal');
+                                                                        pdf.setFont('Hind', 'normal');
                                                                         pdf.setTextColor(...GREY);
                                                                         pdf.text('Generated by KrishiSahAI — Impetus', margin, pH - 8);
                                                                         pdf.text(`Page ${p} of ${total}`, pW - margin, pH - 8, { align: 'right' });
@@ -840,7 +857,10 @@ const Chatbot: React.FC = () => {
 
                                                                 const addLine = (text: string, size: number, bold = false, color: [number, number, number] = DARK_TEXT, x = margin) => {
                                                                     pdf.setFontSize(size);
-                                                                    pdf.setFont('helvetica', bold ? 'bold' : 'normal');
+                                                                    // We only loaded 'normal' font, so fallback to 'helvetica' if strictly waiting for bold without custom bold font
+                                                                    // To keep it simple, we just use the custom font for everything if loaded, or fallback.
+                                                                    // The loaded font is 'Hind'.
+                                                                    pdf.setFont('Hind', 'normal'); 
                                                                     pdf.setTextColor(...color);
                                                                     const lines = pdf.splitTextToSize(text || '', pW - margin - x);
                                                                     lines.forEach((ln: string) => {
@@ -866,11 +886,11 @@ const Chatbot: React.FC = () => {
                                                                 pdf.setFillColor(...GREEN);
                                                                 pdf.rect(0, 0, pW, 30, 'F');
                                                                 pdf.setFontSize(18);
-                                                                pdf.setFont('helvetica', 'bold');
+                                                                pdf.setFont('Hind', 'bold');
                                                                 pdf.setTextColor(255, 255, 255);
                                                                 pdf.text('KrishiSahAI — Chat Export', margin, 13);
                                                                 pdf.setFontSize(9);
-                                                                pdf.setFont('helvetica', 'normal');
+                                                                pdf.setFont('Hind', 'normal');
                                                                 pdf.setTextColor(200, 230, 200);
                                                                 pdf.text(new Date().toLocaleString(), margin, 22);
                                                                 y = 38;
@@ -889,13 +909,15 @@ const Chatbot: React.FC = () => {
                                                                         pdf.setFillColor(...GREEN);
                                                                         pdf.roundedRect(margin, y - 4, 18, 6, 1, 1, 'F');
                                                                         pdf.setFontSize(8);
-                                                                        pdf.setFont('helvetica', 'bold');
+                                                                        pdf.setFont('Hind', 'bold');
                                                                         pdf.setTextColor(255, 255, 255);
                                                                         pdf.text('YOU', margin + 2, y);
                                                                         y += 5;
                                                                         // Message content on light grey background
-                                                                        const userLines = pdf.splitTextToSize(m.content || '', pW - margin * 2 - 4);
-                                                                        const boxH = userLines.length * 5.5 + 6;
+                                                                        pdf.setFontSize(10);
+                                                                        pdf.setFont('Hind', 'normal');
+                                                                        const userLines = pdf.splitTextToSize(m.content || '', pW - margin * 2 - 3);
+                                                                        const boxH = userLines.length * 5 + 1.5 + 4;
                                                                         checkPage(boxH + 4);
                                                                         pdf.setFillColor(245, 245, 245);
                                                                         pdf.roundedRect(margin, y - 2, pW - margin * 2, boxH, 2, 2, 'F');
@@ -906,14 +928,16 @@ const Chatbot: React.FC = () => {
                                                                         pdf.setFillColor(...LIGHT_GREEN);
                                                                         pdf.roundedRect(margin, y - 4, 28, 6, 1, 1, 'F');
                                                                         pdf.setFontSize(8);
-                                                                        pdf.setFont('helvetica', 'bold');
+                                                                        pdf.setFont('Hind', 'bold');
                                                                         pdf.setTextColor(...GREEN);
                                                                         pdf.text('KRISHISAHAI', margin + 2, y);
                                                                         y += 5;
                                                                         // AI message on light green background
                                                                         const aiText = stripMd(m.content);
-                                                                        const aiLines = pdf.splitTextToSize(aiText, pW - margin * 2 - 4);
-                                                                        const aiBoxH = aiLines.length * 5.5 + 6;
+                                                                        pdf.setFontSize(10);
+                                                                        pdf.setFont('Hind', 'normal');
+                                                                        const aiLines = pdf.splitTextToSize(aiText, pW - margin * 2 - 3);
+                                                                        const aiBoxH = aiLines.length * 5 + 1.5 + 4;
                                                                         checkPage(aiBoxH + 4);
                                                                         pdf.setFillColor(...LIGHT_GREEN);
                                                                         pdf.roundedRect(margin, y - 2, pW - margin * 2, aiBoxH, 2, 2, 'F');
