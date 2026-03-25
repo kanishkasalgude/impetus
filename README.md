@@ -44,7 +44,7 @@ Indian agriculture sustains over 700 million people yet remains one of the most 
 
 KrishiSahAI Advisory is a unified intelligence platform that addresses every dimension of this problem within a single, consistent interface.
 
-The system provides farmers with a **conversational AI Business Advisor** that understands the farmer's land, capital, soil, and location to generate actionable multi-year strategies. A **CropCycle Planner** provides detailed phase-by-phase lifecycle management, from sowing and pre-planting through vegetative growth, flowering, and harvest, with specific actions tailored to the farmer's crop and soil conditions. It provides a **Precision Diagnostics suite** powered by a TensorFlow-based disease classifier and a YOLO v8-powered pest detector that operate directly on images captured by any smartphone camera. A **Waste-to-Value Engine** driven by a large language model identifies specific industrial and biological conversion pathways for the farmer's specific residue type. A **Farm Health Engine** provides AI-driven soil and crop health assessments with actionable interventions. A **multilingual voice interface** using OpenAI Whisper and gTTS ensures that neither literacy nor language is ever a barrier to access. A **Knowledge Hub** aggregates expert agricultural articles and resources for continuous learning.
+The system provides farmers with a **conversational AI Business Advisor** that understands the farmer's land, capital, soil, and location to generate actionable multi-year strategies. A **Roadmap Planner** provides detailed phase-by-phase lifecycle management, from sowing and pre-planting through vegetative growth, flowering, and harvest, with specific actions tailored to the farmer's crop and soil conditions. It provides a **Precision Diagnostics suite** powered by a TensorFlow-based disease classifier and a YOLO v8-powered pest detector that operate directly on images captured by any smartphone camera. A **Waste-to-Value Engine** driven by a large language model identifies specific industrial and biological conversion pathways for the farmer's specific residue type. A **Farm Health Engine** provides AI-driven soil and crop health assessments with actionable interventions. A **multilingual voice interface** using OpenAI Whisper and gTTS ensures that neither literacy nor language is ever a barrier to access. A **Knowledge Hub** aggregates expert agricultural articles and resources for continuous learning.
 
 The platform is built for India's farmers while being architecturally production-ready for enterprise and government deployment.
 
@@ -52,11 +52,11 @@ The platform is built for India's farmers while being architecturally production
 
 ## Core Features
 
-### CropCycle Planner (Home Dashboard)
+### Roadmap (Home Dashboard)
 
 Phase-by-phase lifecycle management for any crop.
 
-The CropCycle Planner is the farmer's primary dashboard. It generates a detailed lifecycle roadmap for the farmer's selected crop, breaking the entire growing season into logical phases (Sowing, Vegetative Growth, Flowering & Fruiting, Harvest & Post-Harvest). Each phase includes critical focus areas, required actions with specific irrigation, fertilization, and pest control steps, and projected yield values. Quick-action buttons on each phase card allow farmers to jump directly to the AI Chatbot, Fertilizer Advisor, Disease/Pest Scanner, or Waste-to-Value Engine with pre-loaded context for that specific phase. Plans are cached in both Firestore and LocalStorage for instant loading on return visits.
+The Roadmap is the farmer's primary dashboard. It generates a detailed lifecycle plan for the farmer's selected crop, breaking the entire growing season into logical phases (Sowing, Vegetative Growth, Flowering & Fruiting, Harvest & Post-Harvest). Each phase includes critical focus areas, required actions with specific irrigation, fertilization, and pest control steps, and projected yield values. Quick-action buttons on each phase card allow farmers to jump directly to the AI Chatbot, Fertilizer Advisor, Disease/Pest Scanner, or Waste-to-Value Engine with pre-loaded context for that specific phase. Plans are cached in both Firestore and LocalStorage for instant loading on return visits.
 
 ---
 
@@ -80,7 +80,7 @@ Accessible from the Business Advisory module, the roadmap generator creates a de
 
 Computer vision-based crop disease identification from a single photograph.
 
-A multi-class convolutional neural network trained on the PlantVillage dataset classifies 38 distinct disease conditions across crops including tomatoes, apples, corn, and potatoes. The inference pipeline includes severity scoring based on model confidence, and a curated CSV database provides specific home remedies and chemical treatment protocols for each detected disease. Images are processed and discarded after inference to preserve user privacy and server disk space.
+A multi-class convolutional neural network trained on the New Plant Diseases Dataset classifies 38 distinct disease conditions across crops including tomatoes, apples, corn, and potatoes. The inference pipeline includes severity scoring based on model confidence, and a curated CSV database provides specific home remedies and chemical treatment protocols for each detected disease. Images are processed and discarded after inference to preserve user privacy and server disk space.
 
 ---
 
@@ -136,7 +136,7 @@ The system connects to WeatherAPI to retrieve location-specific forecasts, pre-p
 
 Personalized, crop-specific news aggregation with bookmarking.
 
-The news service constructs targeted boolean queries combining crop names, district names, and economic keywords to filter out generic national news in favor of alerts directly relevant to the farmer's operation. The system uses a tiered fallback strategy to ensure results are always returned. Farmers can star/bookmark articles for later reference, with starred articles persisted in LocalStorage and accessible through a dedicated sidebar. Full article detail views with rich formatting are available.
+The news service constructs targeted boolean queries combining crop names, district names, and economic keywords to filter out generic national news in favor of alerts directly relevant to the farmer's operation. The system uses a tiered fallback strategy to ensure results are always returned. Farmers can star/bookmark articles for later reference, with starred articles persisted in LocalStorage and accessible through a dedicated sidebar. Full article detail views with rich formatting, free of unnecessary recommended actions, are available. The API interface ensures robust CORS handling and gracefully manages connectivity edge-cases.
 
 ---
 
@@ -153,6 +153,14 @@ The Knowledge Hub replaces the previous notification system with a centralized r
 Full speech-to-text and text-to-speech support across three languages.
 
 Powered by OpenAI Whisper for transcription and gTTS for synthesis, the voice module supports English, Hindi, and Marathi across both input and output. Audio blobs are received as temporary files, transcribed, and deleted. The response is synthesized as an audio stream and returned for playback, enabling hands-free, screen-free access for farmers in the field.
+
+---
+
+### Seamless Navigation and Clean UI
+
+Consistent UX with global back buttons and a distraction-free interface.
+
+Navigation across nested views (Knowledge Hub, Chatbot, Article Detail, Business Detail, Edit Profile) is streamlined with persistent, intuitive back buttons. The entire UI is designed to be highly readable without unnecessary visual noise, stripping out all emojis and confidence footers for a professional, distraction-free experience.
 
 ---
 
@@ -178,7 +186,7 @@ Server-side PDF generation via ReportLab is available for the Roadmap module, pr
 │                                                                  │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐            │
 │  │   Home   │ │ Chatbot  │ │ Advisory │ │  Waste   │            │
-│  │ CropCycle│ │  (SSE)   │ │  Engine  │ │ ToValue  │            │
+│  │  Roadmap │ │  (SSE)   │ │  Engine  │ │ ToValue  │            │
 │  └──────────┘ └──────────┘ └──────────┘ └──────────┘            │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐            │
 │  │ Disease  │ │   Pest   │ │  Farm    │ │Knowledge │            │
@@ -250,7 +258,7 @@ Server-side PDF generation via ReportLab is available for the Roadmap module, pr
 | Flask 3 | REST API gateway with CORS and security headers |
 | LangChain + langchain-ollama | LLM orchestration for advisory, planning, and analysis |
 | Ollama | Local LLM inference (llama3.2) for privacy-preserving AI |
-| TensorFlow | CNN-based crop disease classification (PlantVillage dataset) |
+| TensorFlow | CNN-based crop disease classification (New Plant Diseases Dataset) |
 | Ultralytics YOLOv8 | Real-time pest object detection |
 | OpenAI Whisper | Speech-to-text transcription (EN/HI/MR) |
 | gTTS | Text-to-speech synthesis |
@@ -276,7 +284,7 @@ impetus/
 │       ├── FarmHealth/                 # AI-driven soil/crop health analysis
 │       ├── FiveToTenYear/              # 10-year business roadmap generator
 │       ├── PestDetector/               # YOLOv8 pest detection
-│       ├── Planner/                    # CropCycle lifecycle planner
+│       ├── Planner/                    # Phase planner (Roadmap)
 │       ├── VoiceText/                  # Whisper STT + gTTS TTS
 │       ├── WasteToValue/               # Agricultural waste conversion engine
 │       ├── WeatherNewsIntegration/     # Weather API + GNews integration
@@ -286,7 +294,7 @@ impetus/
 │   ├── App.tsx                         # Root component with routing and header
 │   ├── firebase.ts                     # Firebase client configuration
 │   ├── pages/
-│   │   ├── Home.tsx                    # CropCycle Planner dashboard
+│   │   ├── Home.tsx                    # Roadmap Planner dashboard
 │   │   ├── Chatbot.tsx                 # AI conversational advisor
 │   │   ├── BusinessAdvisory.tsx        # Business plan generator + assessment
 │   │   ├── WasteToValue.tsx            # Waste analysis with chat follow-up

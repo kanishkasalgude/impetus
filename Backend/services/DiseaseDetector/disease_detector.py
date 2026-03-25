@@ -1,6 +1,6 @@
 """
 Standalone disease detector helper.
-Loads the trained TensorFlow model from `plant_disease_model.h5`
+Loads the trained TensorFlow model from `trained_model.keras`
 and exposes a simple `predict(image_path)` function that returns the
 detected crop, disease and confidence score.
 """
@@ -20,7 +20,7 @@ from PIL import Image
 
 # Resolve paths relative to this file so the script works from anywhere.
 BASE_DIR = Path(__file__).resolve().parent
-MODEL_PATH = BASE_DIR / "plant_disease_model.h5"
+MODEL_PATH = BASE_DIR / "trained_model.keras"
 
 # Class labels used during model training (must keep ordering intact).
 CLASS_NAMES = [

@@ -95,6 +95,35 @@ class AgriAgent:
         print("Querying Ollama...")
         advisory_json = self._call_ollama(context)
         
+        if isinstance(advisory_json, dict) and "error" in advisory_json:
+            print(f"Ollama failed: {advisory_json['error']}. Falling back to raw data.")
+            
+            # Reformat raw news to match the expected UI structure
+            fallback_news = []
+            if isinstance(news_data, list):
+                for n in news_data:
+                    fallback_news.append({
+                        "headline": n.get("title", n.get("headline", "News Update")),
+                        "summary": n.get("description", n.get("summary", "No details available.")),
+                        "action": "Read more for details.",
+                        "category": "GENERAL",
+                        "url": n.get("url", ""),
+                        "source": n.get("source", n.get("publisher", {}).get("title", "News Source")) if isinstance(n.get("publisher"), dict) else n.get("publisher", "Source"),
+                        "published_at": n.get("published_at", n.get("published date", "")),
+                        "image": n.get("image", n.get("image_url", ""))
+                    })
+            
+            # Provide raw weather data summary
+            weather_desc = weather_data.get('current', {}).get('condition', {}).get('text', 'No current weather data available.') if isinstance(weather_data, dict) else 'Weather unavailable.'
+
+            return {
+                "relevant_agri_news": fallback_news,
+                "weather_summary": f"Current conditions: {weather_desc}",
+                "weather_alerts": [],
+                "personalized_advice": ["LLM service is currently unavailable. Displaying general news."],
+                "next_actions_for_farmer": []
+            }
+
         return advisory_json
 
     def _call_ollama(self, context):

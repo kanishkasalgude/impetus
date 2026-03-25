@@ -69,7 +69,7 @@ Frontend/
 
 **State Management:** Context API is used for global state (theme, language, active farm). Local component state manages form inputs, loading flags, and transient UI data. No external state library (Redux/Zustand) is used, the current scale does not warrant the overhead.
 
-**Routing:** React Router v6 with route-level lazy loading. Authentication guards redirect unauthenticated users to the login page before reaching any feature route.
+**Routing:** React Router v7 with route-level lazy loading. A global back button strategy (`navigate(-1)`) is implemented across nested views (Knowledge Hub, Chatbot, ArticleDetail, BusinessDetail, EditProfile) to ensure consistent backward navigation. Authentication guards redirect unauthenticated users to the login page before reaching any feature route.
 
 **API Client (`api.ts`):** All backend communication is routed through a single centralized module. It exposes `get`, `post`, `postMultipart`, `stream`, and feature-specific methods. Every call retrieves a fresh Firebase ID token from `auth.currentUser.getIdToken(true)` and attaches it as a Bearer token header. The `stream` method implements a custom SSE reader using the Fetch API's `ReadableStream` interface, decoding chunked Server-Sent Event payloads and invoking an `onChunk` callback for each received token, producing a real-time "typing" effect for LLM responses.
 
@@ -187,6 +187,7 @@ All route handlers wrap service calls in `try/except` blocks. Errors are logged 
 - `to_context()`: Serializes the profile into a high-entropy natural language string used as the system context for LLM sessions.
 - `KrishiSahAIAdvisor`: Wraps a `ChatOllama` LangChain chain with `MessagesPlaceholder` for multi-turn memory. Implements `chat()` for synchronous response, `stream_chat()` for token-by-token SSE generation, and `generate_title()` for session titling.
 - Iron Curtain prompting: System prompts explicitly prohibit language fallback, enforce the response language, and frame the AI persona as an expert Indian agricultural business consultant.
+- Clean UI: The frontend UI is stripped of confidence footers and emojis to present a more professional, distraction-free interface.
 
 **Data Flow:**
 ```
@@ -346,9 +347,9 @@ Additional capability: `POST /api/chat/generate-title`, invokes the advisor's `g
 
 ---
 
-### 3.8 Crop Planner
+### 3.8 Phase Planner (Roadmap)
 
-**Objective:** Generate a crop-specific phased cultivation plan.
+**Objective:** Generate a crop-specific phased cultivation plan (Roadmap).
 
 **Backend Logic (`planner_service.py`, `CropPlannerGenerator`):**
 
@@ -391,7 +392,7 @@ Additional capability: `POST /api/chat/generate-title`, invokes the advisor's `g
 - API: GNews, authenticated via `GNEWS_API_KEY`.
 - Query construction: `(crop1 OR crop2) AND (district) AND (agriculture OR farming OR price OR mandi OR scheme)`.
 - Tiered fallback: If the compound query returns fewer than 3 results, the service retries with a simpler crop-only query, then a category-only query.
-- Results are filtered for recency and deduplicated by URL before returning.
+- Results are filtered for recency and deduplicated by URL before returning. The module intentionally excludes "Recommended Actions" from the UI out of a desire for a cleaner feed, and the backend employs strict route precedence to avoid CORS and 500 internal server errors.
 
 ---
 
@@ -818,27 +819,34 @@ data: [DONE]\n\n
 
 | Attribute | Value |
 |-----------|-------|
-| **Architecture** | Convolutional Neural Network (CNN) |
+| **Architecture** | Custom 10-layer CNN (5 Conv blocks + MaxPool + Dense) |
 | **Framework** | TensorFlow 2.x / Keras |
-| **Dataset** | PlantVillage (publicly available) |
+| **Dataset** | New Plant Diseases Dataset (Kaggle) |
 | **Classes** | 38 (disease + crop combinations) |
-| **Input Shape** | 224 × 224 × 3 (RGB) |
+| **Input Shape** | 128 × 128 × 3 (RGB) |
 | **Output** | Softmax probability vector (38 dimensions) |
-| **Model File** | `plant_disease_model.h5` |
+| **Model File** | `trained_model.keras` |
 | **Loading** | Lazy, first inference request |
+| **Parameters**| 7,842,762 (29.92 MB) |
 
 **Preprocessing Pipeline:**
 1. Load image from disk using PIL.
-2. Resize to 224 × 224.
+2. Resize to 128 × 128 (Bilinear interpolation).
 3. Convert to NumPy array of float32.
 4. Normalize pixel values to [0.0, 1.0].
-5. Expand dimensions to create batch axis: shape becomes `(1, 224, 224, 3)`.
+5. Expand dimensions to create batch axis: shape becomes `(1, 128, 128, 3)`.
 
-**Accuracy:** Trained to high accuracy on PlantVillage validation set. Specific metrics vary by class; commonly reported top-1 accuracy is 96–98% on validation data under controlled imaging conditions.
+**Training Details:**
+- **Optimizer**: Adam (`learning_rate=0.0001`)
+- **Loss Function**: Categorical Crossentropy
+- **Epochs**: 10
+- **Regularization**: Dropout (0.25 after Conv layers, 0.40 before output)
+
+**Accuracy:** Achieved **98.10%** training accuracy and **95.07%** validation accuracy on the New Plant Diseases Dataset.
 
 **Limitations:**
 - Performance degrades on images with poor lighting, motion blur, or significant background noise.
-- Classes are limited to the PlantVillage training set, diseases not in the training distribution will be misclassified.
+- Classes are limited to the 38 classes in the dataset, diseases not in the training distribution will be misclassified.
 - Does not account for mixed infections (multiple diseases simultaneously).
 
 ---

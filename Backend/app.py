@@ -818,6 +818,47 @@ weather_service = WeatherService()
 news_service = NewsService()
 agri_agent = AgriAgent()
 
+@app.route('/api/news/general', methods=['GET', 'OPTIONS'])
+def get_general_news():
+    """
+    Fetch general agriculture news for India.
+    No authentication required as this is public news.
+    """
+    try:
+        print(f"[NEWS] General Intelligence - Fetching broad agriculture news")
+        
+        # For general news, we use a default profile or simplified agent logic
+        # For now, let's use the NewsService directly as it was, or adapt AgriAgent
+        # Since AgriAgent needs a profile, we'll give it a generic one for national level
+        generic_profile = {
+            "name": "Indian Farmer",
+            "location": {"district": "", "state": "India"},
+            "crops": ["Agriculture"], # Broad category
+            "soil_type": "Various",
+            "market_access": "Multiple",
+            "farming_stage": "Various"
+        }
+
+        # Async call wrapper
+        import asyncio
+        advisory = asyncio.run(agri_agent.generate_advisory(generic_profile, mode='general'))
+        
+        if isinstance(advisory, dict) and 'error' in advisory:
+            return jsonify({'success': False, 'error': advisory['error']}), 500
+        
+        return jsonify({
+            'success': True, 
+            'news': advisory.get('relevant_agri_news', []),
+            'weather_summary': advisory.get('weather_summary'),
+            'weather_alerts': advisory.get('weather_alerts')
+        })
+    except Exception as e:
+        print(f"[NEWS] General Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/api/news/<user_id>', methods=['GET', 'OPTIONS'])
 @require_auth
 def get_personalized_news(user_id):
@@ -889,54 +930,13 @@ def get_personalized_news(user_id):
             'weather_summary': advisory.get('weather_summary'),
             'weather_alerts': advisory.get('weather_alerts'),
             'advice': advisory.get('personalized_advice', []),
-            'next_actions': advisory.get('next_actions_for_farmer', [])
+            "next_actions": advisory.get('next_actions_for_farmer', [])
         })
     except Exception as e:
         print(f"[NEWS] Unexpected Error: {e}")
         import traceback
         traceback.print_exc()
         return get_general_news()
-
-
-@app.route('/api/news/general', methods=['GET', 'OPTIONS'])
-def get_general_news():
-    """
-    Fetch general agriculture news for India.
-    No authentication required as this is public news.
-    """
-    try:
-        print(f"[NEWS] General Intelligence - Fetching broad agriculture news")
-        
-        # For general news, we use a default profile or simplified agent logic
-        # For now, let's use the NewsService directly as it was, or adapt AgriAgent
-        # Since AgriAgent needs a profile, we'll give it a generic one for national level
-        generic_profile = {
-            "name": "Indian Farmer",
-            "location": {"district": "", "state": "India"},
-            "crops": ["Agriculture"], # Broad category
-            "soil_type": "Various",
-            "market_access": "Multiple",
-            "farming_stage": "Various"
-        }
-
-        # Async call wrapper
-        import asyncio
-        advisory = asyncio.run(agri_agent.generate_advisory(generic_profile, mode='general'))
-        
-        if isinstance(advisory, dict) and 'error' in advisory:
-            return jsonify({'success': False, 'error': advisory['error']}), 500
-        
-        return jsonify({
-            'success': True, 
-            'news': advisory.get('relevant_agri_news', []),
-            'weather_summary': advisory.get('weather_summary'),
-            'weather_alerts': advisory.get('weather_alerts')
-        })
-    except Exception as e:
-        print(f"[NEWS] General Error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 # --- VoiceText Routes ---
 from flask import send_from_directory

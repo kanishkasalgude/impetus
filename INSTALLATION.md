@@ -243,7 +243,7 @@ VITE_FIREBASE_APP_ID=your_app_id
 VITE_FIREBASE_MEASUREMENT_ID=G-XXXXXXXXXX
 
 # Backend API URL
-VITE_API_URL=http://localhost:5000/api
+VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
 > **Note:** All `VITE_` prefixed variables are embedded into the JavaScript bundle at build time. Never put secret keys in `VITE_` variables. Firebase configuration values are intended to be public, access control is enforced by Firebase Security Rules.
@@ -310,15 +310,15 @@ You should see `llama3.2` listed in the models array.
 
 ### 5.2 Disease Detection Model
 
-The TensorFlow disease detection model (`plant_disease_model.h5`) must be placed in:
+The TensorFlow disease detection model (`trained_model.keras`) must be placed in:
 
 ```
-Backend/services/DiseaseDetector/plant_disease_model.h5
+Backend/services/DiseaseDetector/trained_model.keras
 ```
 
 The model is loaded lazily on the first `/api/disease/detect` request. If the file is absent, the endpoint will return a 500 error with a file-not-found message.
 
-> **Note:** The model file is not included in the repository due to file size constraints (typically 50–200 MB). Contact the maintainers or train a new model using the PlantVillage dataset and a standard Keras CNN architecture.
+> **Note:** The model file is not included in the repository due to file size constraints (typically 50–200 MB). Contact the maintainers or train a new model using the New Plant Diseases Dataset from Kaggle with a custom CNN architecture.
 
 ### 5.3 Pest Detection Model
 
@@ -400,14 +400,14 @@ gTTS requires an active internet connection, it calls Google's text-to-speech AP
 | `VITE_FIREBASE_MESSAGING_SENDER_ID` | Yes | N/A | Firebase cloud messaging sender ID |
 | `VITE_FIREBASE_APP_ID` | Yes | N/A | Firebase web app ID |
 | `VITE_FIREBASE_MEASUREMENT_ID` | No | N/A | Firebase Analytics measurement ID |
-| `VITE_API_URL` | Yes | `http://localhost:5000/api` | Full base URL of the Flask backend API |
+| `VITE_API_BASE_URL` | Yes | `http://localhost:5000/api` | Full base URL of the Flask backend API |
 
 ### 6.3 Access from Mobile Devices or Emulators
 
 To access the development server from a mobile device or Android emulator on the same local network:
 
 1. Find your machine's local IP address (`ipconfig` on Windows, `ifconfig` on Mac/Linux).
-2. Set `VITE_API_URL=http://YOUR_LOCAL_IP:5000/api` in `Frontend/.env`.
+2. Set `VITE_API_BASE_URL=http://YOUR_LOCAL_IP:5000/api` in `Frontend/.env`.
 3. Set `ALLOWED_ORIGINS` in root `.env` to include `http://YOUR_LOCAL_IP:5173`.
 4. Access the frontend at `http://YOUR_LOCAL_IP:5173` from the mobile browser.
 
@@ -643,8 +643,8 @@ Transfer `app-release-signed.apk` to your Android device and install.
 
 ---
 
-**Problem:** Disease model not loading, `FileNotFoundError: plant_disease_model.h5`  
-**Solution:** The model weights file is not present. Place the trained `plant_disease_model.h5` file in `Backend/services/DiseaseDetector/`.
+**Problem:** Disease model not loading, `FileNotFoundError: trained_model.keras`  
+**Solution:** The model weights file is not present. Place the trained `trained_model.keras` file in `Backend/services/DiseaseDetector/`.
 
 ---
 
@@ -687,13 +687,13 @@ Transfer `app-release-signed.apk` to your Android device and install.
 
 ---
 
-**Problem:** `VITE_API_URL` not reflecting changes  
+**Problem:** `VITE_API_BASE_URL` not reflecting changes  
 **Solution:** Vite embeds environment variables at build time. After changing `Frontend/.env`, restart the Vite development server with Ctrl+C followed by `npm run dev`.
 
 ---
 
 **Problem:** Mobile device cannot access the local server  
-**Solution:** Set `VITE_API_URL` to your machine's LAN IP (not `localhost`). Ensure Windows/macOS firewall permits inbound connections on port 5000. See Section 6.3 for full instructions.
+**Solution:** Set `VITE_API_BASE_URL` to your machine's LAN IP (not `localhost`). Ensure Windows/macOS firewall permits inbound connections on port 5000. See Section 6.3 for full instructions.
 
 ---
 
