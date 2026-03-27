@@ -117,9 +117,9 @@ const Chatbot: React.FC = () => {
     const [selectedFeature, setSelectedFeature] = useState<{ id: string; name: string; description: string; path?: string } | null>(null);
 
     const featureButtons = [
-        { id: 'disease-pest', name: t.featureCropCareTitle || 'Disease & Pest', description: t.featureCropCareSub || 'Detect diseases and pests in your crops using AI.', path: '/crop-care', icon: <Sprout className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
-        { id: 'plan', name: t.featurePlannerTitle || 'CropCycle', description: t.featurePlannerSub || 'Create and view CropCycle for your farm.', path: '/plan', icon: <Map className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
+        { id: 'plan', name: t.featurePlannerTitle || 'CropCycle', description: t.featurePlannerSub || 'Know the crop lifecycle in simple 4 phases.', path: '/plan', icon: <Map className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
         { id: 'advisory', name: t.featureBusinessTitle || 'Business Advisory', description: t.featureBusinessSub || 'Get business recommendations based on your farm and market.', path: '/advisory', icon: <Briefcase className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
+        { id: 'disease-pest', name: t.featureCropCareTitle || 'Crop Care', description: t.featureCropCareSub || 'Detect diseases and pests in your crops using AI.', path: '/crop-care', icon: <Sprout className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> },
         { id: 'waste', name: t.featureWasteTitle || 'Waste to Value', description: t.featureWasteSub || 'Explore profitable ways to reuse, sell, or compost farm waste.', path: '/waste-to-value', icon: <Recycle className="w-8 h-8 md:w-10 md:h-10 text-[#1B5E20]" /> }
     ];
 
@@ -1015,7 +1015,7 @@ const Chatbot: React.FC = () => {
                         <button
                             onClick={() => handleSend()}
                             disabled={!input.trim() || isLoading}
-                            className="p-4 bg-deep-green text-white hover:bg-deep-green/90 rounded-2xl disabled:opacity-50 disabled:bg-stone-300 transition-all shadow-md min-w-[3.5rem] flex items-center justify-center"
+                            className="p-4 bg-[#1B5E20] text-white hover:bg-[#2E7D32] rounded-2xl disabled:opacity-50 transition-all shadow-md min-w-[3.5rem] flex items-center justify-center"
                         >
                             <Send className="w-5 h-5" />
                         </button>

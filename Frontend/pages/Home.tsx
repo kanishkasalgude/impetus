@@ -84,7 +84,6 @@ const Home: React.FC = () => {
                         setError('');
                         return;
                     } else {
-                        // Remove invalid cache
                         localStorage.removeItem(cacheKey);
                     }
                 }
