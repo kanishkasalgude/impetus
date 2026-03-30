@@ -143,8 +143,8 @@ const WasteToValue: React.FC = () => {
         if (!cropInput.trim()) return;
 
         setView('processing');
-        setMessages([]); // Clear previous chat
-        setActiveChatId(null); // Reset active chat for new analysis
+        setMessages([]);
+        setActiveChatId(null);
 
         try {
             const response = await api.post('/waste-to-value/analyze', {
@@ -168,7 +168,6 @@ const WasteToValue: React.FC = () => {
 
     const handleActiveCropClick = (crop: string) => {
         setCropInput(crop);
-        // Trigger analysis directly
         const langParam = lang === 'HI' ? 'Hindi' : lang === 'MR' ? 'Marathi' : 'English';
 
         setView('processing');
