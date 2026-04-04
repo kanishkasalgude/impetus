@@ -1,6 +1,6 @@
 # KrishiSahAI Mobile App – Complete Demo Setup Guide
 
-> **Current Tunnel URL:** `https://krishisahai.loca.lt`
+> **Current Tunnel URL:** `https://1cdd8d81b3b2f9.lhr.life`
 > If the tunnel URL changes, follow **Section 5** to rebuild & redeploy.
 
 ---
@@ -27,7 +27,7 @@ Do this **before** picking up the phone.
 
 4. Open a **new terminal** (keep the first one running) and start the tunnel:
    ```powershell
-   lt --port 5000
+   lt --port 5000 --subdomain krishisahai
    ```
     You will see a URL like: `your tunnel is at https://krishisahai.loca.lt`
 
